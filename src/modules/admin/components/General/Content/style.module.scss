@@ -1,0 +1,38 @@
+.infoWrapper {
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.titleHeader {
+    
+    width: 100%;
+    z-index: 0;
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        width: 100%;
+        border-bottom: 1px #ccc solid;
+    }
+    
+    li {
+        width: auto;
+        position: relative;
+        padding: 0 10px;
+        font-size: 24px;
+    }
+
+    li::before {
+        content: '';
+        background: red;
+        height: 4px;
+        width: 100%;
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        z-index: 3;
+    }
+}

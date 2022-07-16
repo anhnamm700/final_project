@@ -1,0 +1,99 @@
+.header, .title-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100px;
+    background-color: #323259;
+    color: #fff;
+}
+
+.header {
+    box-shadow: 0 6px 3px #222;
+}
+
+.icon {
+    font-size: 30px;
+    margin: 0 30px
+}
+
+.title-home {
+    font-size: 30px;
+}
+
+li {
+    
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    padding: 12px 45px;
+    font-size: 20px;
+    cursor: pointer;
+    border-top: 1px #222 solid;
+}
+
+.list-item-small {
+    margin-right: 30px;
+    padding: 12px 30px;
+    font-size: 18px;
+}
+
+.hidden-list {
+    transition: all .9s ease;
+    height: 0;
+    visibility: hidden;
+    opacity: 0;
+}
+
+.hidden-list.show {
+    height: auto;
+    visibility: visible;
+    opacity: 1;
+}
+
+.list-item-small:last-child {
+    border-bottom: 0 !important;
+}
+
+.list-item:hover {
+    color: #ccc;
+}
+
+.list-item p {
+    margin: 0;
+    /* padding:  */
+    margin-left: 8px;
+}
+
+.info-box {
+    position: relative;
+}
+
+.user-info {
+    position: absolute;
+    right: 40px;
+    width: auto;
+    background: #fff;
+    box-shadow: 0 0 3px #000;
+    border-radius: 6px;
+}
+
+.user-info li {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    font-size: 18px;
+    color: #000;
+}
+
+.user-info li > span {
+    color: #666;
+}

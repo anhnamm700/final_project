@@ -1,0 +1,176 @@
+.detailWrapper {
+    padding: 30px;
+}
+
+.infoWrapper{
+    color: #fff;
+    // width: 800px;
+
+    .titleHeader {
+        ul {
+            list-style: none;
+            font-size: 24px;
+            padding: 0;
+            display: flex;
+            width: 100%;
+            border-bottom: 1px #ccc solid;
+            
+
+            
+
+            li {
+                position: relative;
+                padding: 0 20px;
+                &:before {
+                    content: '';
+                    position: absolute;
+                    bottom: -2px;
+                    left: 0;
+                    height: 3px;
+                    width: 100%;
+                    background: red;
+                }
+            }
+        }
+    }
+}
+
+.ProductComponent {
+    width: 600px;
+    margin: 0 200px;
+
+    h6 {
+        font-size: 24px;
+        margin-top: 30px;
+        line-height: 40px;
+    }
+
+    .contentInfo {
+        p, label {
+            width: 250px;
+            text-align: right;
+        }
+
+        span {
+            margin-left: 36px;
+        }
+    }
+}
+
+.selectHome {
+    width: 300px;
+    min-height: 40px;
+    background: transparent;
+    
+}
+
+.selectMainHidden {
+    margin-top: 30px;
+}
+
+.selectMain {
+    position: relative;
+    // width: 300px;
+    // border: 1px #ccc solid;
+    margin-bottom: 30px;
+    color: #fff;
+    // width: 300px;
+
+    .selectHome {
+        line-height: 40px;
+        width: 320px;
+        margin-bottom: 0;
+        padding: 4px 12px;
+        cursor: pointer;
+        border: 1px #ccc solid;
+    }
+
+    .iconExpand {
+        position: absolute;
+        right: 10px;
+        top: 30%;
+    }
+    
+    .optionItem {
+        position: absolute;
+        // bottom: 0;
+        top: 48px;
+        right: 0px;
+        padding: 12px 20px;
+        width: 60%;
+        background: #fff;
+        color: #000;
+        max-height: 300px;
+        overflow: hidden;
+        overflow-y: scroll;
+    }
+
+    .memberArea {
+        margin-top: 20px;
+
+        .memberTitle {
+            font-size: 20px;
+            text-align: left;
+        }
+
+        .memberItem {
+            margin-left: 30px;
+            display: flex;
+            justify-content: left;
+
+            input {
+                margin-right: 8px;
+            }
+
+            label {
+                width: auto;
+            }
+        }
+    }
+
+    .memberArea:first-child {
+        margin-top: 0;
+    }
+
+
+}
+
+.optionOther {
+    margin-left: 36px;
+    
+}
+
+select.optionOther, textarea.optionOther {
+    width: 300px;
+}
+
+.infoArea {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+
+.socialOption {
+    margin: 50px;
+    text-align: right;
+}
+
+.updateButton {
+    width: 200px;
+    height: 50px;
+    border-radius: 5px;
+    margin-left: 60px;
+    background-color: #3498db;
+    color: #fff
+}
+
+.relative {
+    position: relative;
+}
+
+.messageError {
+    position: absolute;
+    right: -200px;
+    top: 6px;
+    color: red;
+}

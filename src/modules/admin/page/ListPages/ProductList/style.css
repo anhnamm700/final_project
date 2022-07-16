@@ -1,0 +1,193 @@
+.warpper {
+    padding: 50px 30px;
+    position: relative;
+}
+
+.title {
+    color: #fff;
+}
+
+.box-main-search {
+    color: #fff;
+    background-color: #323259;
+    padding: 30px;
+    font-size: 18px;
+}
+
+.box-search {
+   display: flex;
+    justify-content: space-between;
+    align-items: center; 
+}
+
+.expand-btn {
+    display: flex;
+    justify-content: center; 
+}
+
+.expand-search {
+    border-top: 1px #000 solid;
+    margin-top: 30px;
+    padding-top: 20px;
+    display: flex;
+}
+
+.search-in {
+    margin-right: 30px;
+}
+
+.search-in p.title {
+    margin-right: 40px;
+    display: flex;
+    /* align-items: center; */
+}
+
+.vendor-box {
+    position: relative;
+}
+
+.vendor-spinner {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    bottom: 0;
+    font-size: 22px;
+    animation: vendor 1s linear infinite;
+}
+
+@keyframes vendor {
+    from{
+        transform: rotate(0deg);
+    }
+
+    to{
+        transform: rotate(360deg);
+    }
+}
+
+.table-box {
+    overflow: hidden;
+    overflow-x: scroll;
+}
+
+.table {
+    width: 100%;
+    color: #fff;
+    background-color: #323259;
+    font-size: 20px;
+}
+
+.table tr {
+    line-height: 60px;
+}
+
+.table .widthTable100 {
+    min-width: 100px;
+}
+
+.table .widthTable300 {
+    min-width: 300px;
+}
+
+
+.table .widthTable500 {
+    min-width: 500px;
+}
+
+
+.tfoot {
+    display: flex;
+    border-top: 0;
+    width: 100%;
+    background: #323259;
+    color: #fff;
+    padding: 20px 10px;
+    margin-bottom: 200px;
+    /* position: fixed;
+    bottom: 0; */
+
+    
+}
+
+.tfoot .changeNumber {
+    min-width: 500px;
+    margin-left: 100px;
+    font-size: 18px;
+
+    
+}
+
+.tfoot .changeNumber > p {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.search-data {
+    position: absolute;
+    left: 0;
+    /* bottom: 0; */
+    top: 54px;
+    overflow: hidden;
+    overflow-y: scroll;
+    overflow-x: scroll;
+    background: #fff;
+    color: #000;
+    max-width: 500px;
+    height: 200px;
+}
+
+.vendor-spinner {
+    color: #fff;
+}
+
+.vendor-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.vendor-item:hover {
+    background: #ccc;
+}
+
+.deleteBox {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    background: #1b1b38;
+    padding: 20px 30px;
+    border: 1px #323259 solid;
+}
+
+.deleteButton {
+    padding: 12px 20px;
+    width: 200px;
+    border-radius: 5px;
+    font-size: 20px;
+    background: #34495e;
+    /* color: ; */
+}
+
+.active {
+    background: #2980b9;
+    color: #fff;
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: gainsboro;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: black;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+} 

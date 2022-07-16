@@ -1,0 +1,86 @@
+.table {
+    width: 100%;
+    color: #fff;
+}
+
+.containerPanigation {
+    display: flex;
+    list-style: none;
+
+    li {
+        min-width: 60px;
+        border: 1px #ccc solid;
+
+        a {
+            width: 100%;
+            text-align: center;
+            padding: 10px 12px;
+            display: inline-block;
+            color: #fff
+        }
+
+        &:hover {
+            background: #b18aff;
+        }
+    }
+}
+
+.indexActive {
+    background: #b18aff;
+    text-decoration: none;
+    
+}
+
+.active {
+    color: green;
+}
+
+.panigation {
+    background-color: transparent;
+}
+
+.powerIcon {
+    padding: 4px;
+}
+
+.tfoot {
+    display: flex;
+    border-top: 0;
+    padding: 20px 10px;
+    position: fixed;
+    bottom: 0;
+
+    .changeNumber {
+        min-width: 500px;
+        margin-left: 100px;
+        font-size: 18px;
+
+        & > p {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+    }
+}
+
+.buttonIcon {
+    pointer-events: none;
+}
+
+.inputChange {
+    display: inline-block;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    border-radius: 5px;
+
+
+    &:hover {
+        background: #9b59b6;
+    }
+
+    &:focus {
+        background: #fff;
+        color: #000;
+    }
+}

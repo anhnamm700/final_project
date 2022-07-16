@@ -1,0 +1,38 @@
+.reactSwitch {
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.InfoComponent {
+    display: flex;
+    width: 100%;
+    margin-bottom: 20px;
+
+    .titleInfo {
+        width: 250px;
+        text-align: right;
+    }
+
+    .InfoComponent {
+        width: calc(100% - 250px);
+        margin-left: 40px;
+
+        .itemInfoComponent {
+            width: 100%;
+        }
+    }
+}
+
+.homeSearchTitle {
+    display: none;
+}
+
+
+.homeSearch {  
+
+    .homeSearchInput {
+        height: 50px;
+        width: 300px;
+    }
+    
+}

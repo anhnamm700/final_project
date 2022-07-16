@@ -1,0 +1,18 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    
+}
+
+.error {
+    color: red;
+    height: 30px;
+    margin-top: 0 !important;
+    text-align: left;
+}
+
+.input {
+    padding: 10px 20px;
+    margin-top: 20px;
+    font-size: 18px;
+}

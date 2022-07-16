@@ -1,0 +1,27 @@
+.width400 {
+    width: 500px !important;
+}
+
+.defaultInput {
+    margin-bottom: 0 !important;
+    height: 50px;
+}
+
+.width300 {
+    width: 300px;
+}
+
+
+.width300 input,
+.width400 input,
+.width300 input:focus,
+.width400 input:focus {
+    background-color: #323259;
+    color: #fff;
+}
+
+.width300 input:hover,
+.width400 input:hover {
+    background-color: #1b1b38;
+}
+

@@ -1,0 +1,114 @@
+.selectMain {
+    position: relative;
+    width: 300px;
+    border: 1px #ccc solid;
+
+    .selectHome {
+        line-height: 40px;
+        width: 280px;
+        margin-bottom: 0;
+        padding: 4px 12px;
+        cursor: pointer;
+    }
+
+    .iconExpand {
+        position: absolute;
+        right: 10px;
+        top: 30%;
+    }
+    
+    .optionItem {
+        position: absolute;
+        // bottom: 0;
+        padding: 12px 20px;
+        width: 100%;
+        background: #fff;
+        color: #000;
+        max-height: 300px;
+        overflow: hidden;
+        overflow-y: scroll;
+    }
+
+    .memberArea {
+        margin-top: 20px;
+
+        .memberTitle {
+            font-size: 20px;
+        }
+
+        .memberItem {
+            margin-left: 30px;
+
+            input {
+                margin-right: 8px;
+            }
+        }
+    }
+
+    .memberArea:first-child {
+        margin-top: 0;
+    }
+
+
+}
+
+.expandSearch {
+    display: flex;
+    justify-content: left;
+    margin-top: 50px
+}
+
+.contryArera {
+    margin-bottom: 30px;
+
+    .title {
+        margin: 0 !important;
+        margin-top: 4px;
+        width: 80px;
+    }
+
+    .selectCountry {
+        height: 40px;
+        width: 250px;
+        margin-left: 20px;
+        padding: 4px 12px;
+    }
+}
+
+.searchDate {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    margin-left: 40px;
+
+    input[type=text] {
+        height: 40px;
+        padding: 4px 12px;
+        width: 250px;
+        margin-top: 15px;
+    }
+}
+
+.search-in {
+    position: relative;;
+}
+
+.dateRange {
+    position: absolute;
+    top: 90px;
+}
+
+.buttonIcon {
+    pointer-events: none;
+}
+
+.userItem {
+    cursor: pointer;
+    color: blue;
+}
+
+th {
+    span {
+        cursor: pointer;
+    }
+}
