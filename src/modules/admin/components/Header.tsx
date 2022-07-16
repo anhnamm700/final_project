@@ -10,10 +10,11 @@ import { ROUTES } from 'configs/routes';
 interface Props {
     className: string,
     onClose: () => void,
+    onLogout: () => void
 }
 
 const Header = (props: Props) => {
-    const { className, onClose } = props;
+    const { className, onClose, onLogout } = props;
     const navigate = useNavigate();
     const userInfo = useSelector((state: any) => state?.auth?.user?.user);
 
@@ -63,7 +64,7 @@ const Header = (props: Props) => {
                                     <span>{ userInfo.login }</span>
                                 </li>
 
-                                <li>Đăng xuất</li>
+                                <li style={{ cursor: 'pointer' }} onClick={onLogout}>Đăng xuất</li>
                             </ul>
                         </div>
                     )

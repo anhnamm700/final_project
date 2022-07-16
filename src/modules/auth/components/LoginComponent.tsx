@@ -86,7 +86,7 @@ const LoginComponent = (props: Props) => {
 
            <ButtonComponent
                 variant='primary'
-                size='m'
+                size='login'
                 value='Đăng nhập'
                 icon={<FontAwesomeIcon icon={faRightToBracket}/>}
                 type='submit'
