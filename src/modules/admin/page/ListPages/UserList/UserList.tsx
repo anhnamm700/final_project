@@ -1,37 +1,37 @@
 import axios from "axios";
 import Cookies from "js-cookie";
-import { useCallback, useEffect, useState } from "react";
-import { ACCESS_TOKEN_KEY } from "utils/constant";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import moment from "moment";
+import { useNavigate } from 'react-router-dom';
 import { DateRangePicker  } from 'react-date-range';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faChevronUp, faTrash, faAngleDown, faAngleUp, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
 
 import style from './style.module.scss';
+import { ACCESS_TOKEN_KEY } from "utils/constant";
 import { pagesNumber, membership, userStatus, userActivity } from 'utils/constant';
 import ModalComponent from "modules/components/ModalComponent";
 import PanigationComponent from "modules/components/PanigationComponent";
 import SelectComponent from "modules/components/SelectComponent";
 import ButtonComponent from "modules/components/ButtonComponent";
 import LoadingComponent from "modules/components/LoadingComponent/LoadingComponent";
-import InfoComponent from "modules/components/InfoComponent";
 import { setCountries, setUsers, setRoles } from 'modules/admin/redux/admin';
 import { API_PATHS } from "configs/api";
 import axiosAPI from "common/axiosConfig/axios";
+import InfoComponent from "modules/components/InfoComponent";
 import { ROUTES } from "configs/routes";
 
 const UserList = () => {
     const dispatch = useDispatch();
     const store = useSelector((state: any) => state.admin);
-    const navigate = useNavigate();
 
-    const auth = Cookies.get('token');
+    const auth = Cookies.get(ACCESS_TOKEN_KEY);
+    const navigate = useNavigate();
 
     const [perPage, setPerpage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [userList, setUserList] = useState<any>([]);
+    const [product, setProduct] = useState<any>([]);
     const [isModalDelete, setIsModalDelete] = useState<boolean>(false);
 
     const [checkedAll, setCheckedAll] = useState<any>([]);
@@ -40,16 +40,10 @@ const UserList = () => {
     const [isChecked, setIsChecked] = useState<any>([]);
     const [isSearch, setIsSearch] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [deleteId, setDeleteId] = useState<any>(0);
+    const [deleteId, setDeleteId] = useState<any>(null);
+    const [userList, setUserList] = useState<any>([]);
     const [isExpandSearch, setIsExpandSearch] = useState<boolean>(false);
-
-    const [state, setState] = useState<any>([]);
-    const [isMembershipActive, setIsMembershipActive] = useState<boolean>(false);
-    const [isUserTypeActive, setIsUserTypepActive] = useState<boolean>(false);
-    const [isDateRangeActive, setIsDateRangepActive] = useState<boolean>(false);
     const [isArrangeActive, setIsArrangepActive] = useState<boolean>(false);
-    const [recordsTotal, setRecordsTotal] = useState<number>(0);
-
     const [search, setSearch] = useState<any>({
         seachKeyword: '',
         membership: [],
@@ -65,23 +59,18 @@ const UserList = () => {
         order_by: 'DESC',
         sort: 'last_login'
     });
+    const [state, setState] = useState<any>([]);
+    const [isMembershipActive, setIsMembershipActive] = useState<boolean>(false);
+    const [isUserTypeActive, setIsUserTypepActive] = useState<boolean>(false);
+    const [isDateRangeActive, setIsDateRangepActive] = useState<boolean>(false);
 
-    const productsPerPage = Math.ceil(Number(recordsTotal) / perPage);
+
+    const productsPerPage = Math.ceil(Number(store.users.recordsTotal) / perPage);
     const detailPage = ROUTES.userDetail.slice(0, -3);
+    
+    
 
-    document.addEventListener('click', (e) => {
-        const target = e.target as HTMLTextAreaElement;
-
-        if (target.dataset.set !== 'membership') {
-            setIsMembershipActive(false);
-        }
-
-        if (target.dataset.set !== 'user-type') {
-            setIsUserTypepActive(false);
-        }
-    });
-
-    useEffect(() => { 
+    useEffect(() => {
         const getRoles = async() => {
             try {
                 setIsLoading(true);
@@ -124,41 +113,39 @@ const UserList = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        const status = Number(search?.status[0]) === 0 ? [] : search?.status;
-        const types = search?.type.map((item: any) => item.id);
-        const membership = search?.membership.map((item: any) => item.value);
-
-        const geUsers = async() => {
+        const getProducts = async() => {
             try {
                 setIsLoading(true);
-
-                const dataUsers = await axiosAPI({
+                const status = await Number(search?.status[0]) === 0 ? [] : search?.status;
+                const types = await search?.type.map((item: any) => item.id);
+                const memberships = await search?.membership.map((item: any) => item.value);
+                
+                const dataProducts = await axiosAPI({
                     method: 'POST',
                     url: API_PATHS.users,
                     payload: {
-                        "page":currentPage,
-                        "count":perPage,
-                        "search":search.seachKeyword,
-                        "memberships": membership,
-                        "types":  types,
-                        "status": status,
-                        "country": search.country,
-                        "state": search.state,
-                        "address": search.address,
-                        "phone": search.phone,
-                        "date_type": search.date_type,
-                        "date_range": search.date_range,
-                        "sort": search.sort,
-                        "order_by": search.order_by,
-                        "tz":7
-                       },
-                       header: { Authorization: `${auth}` }
-                });
+                            "page":currentPage,
+                            "count":perPage,
+                            "search":search.seachKeyword,
+                            "memberships": memberships,
+                            "types":  types,
+                            "status": status,
+                            "country": search.country,
+                            "state": search.state,
+                            "address": search.address,
+                            "phone": search.phone,
+                            "date_type": search.date_type,
+                            "date_range": search.date_range,
+                            "sort": search.sort,
+                            "order_by": search.order_by,
+                            "tz":7
+                            },
+                        header: { Authorization: `${auth}` }
+                    });
 
-                if (!dataUsers?.data?.errors) {
-                    dispatch(setUsers(dataUsers?.data));
-                    setRecordsTotal(Number(dataUsers.data.recordsTotal));
-                    setUserList(dataUsers.data.data);
+                if (!dataProducts?.data?.errors) {
+                    dispatch(setUsers(dataProducts.data));
+                    setUserList(dataProducts.data.data);
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
@@ -170,7 +157,7 @@ const UserList = () => {
             }
         }
 
-        geUsers();
+        getProducts();
     }, [dispatch, perPage, currentPage, isSearch, isReload, isArrangeActive]);
 
     const handleSearchData = () => {
@@ -186,28 +173,8 @@ const UserList = () => {
             setIsChecked(isChecked.filter((item: any) => item!== value));
         }
     }
+
     
-
-    const handleCheckAll = (e: any) => {
-        const checked = e.target.checked;
-        const indexProducts: string[] = [];
-
-        if (userList) {
-            userList.map((product: any) => (
-                indexProducts.push(product.profile_id)
-            ))
-        }
-
-        if (checked) {
-            setCheckedAll([...indexProducts]);
-            setIsChecked([...indexProducts]);
-        } else {
-            setCheckedAll([]);
-            setIsChecked([]);
-        }
-
-    }
-   
     
     const handleDeleteProducts = useCallback(async() => {
         setIsLoading(true);
@@ -284,13 +251,13 @@ const UserList = () => {
         setIsModalDelete(true);
     }
 
-    const handleGetState = useCallback(async(e: any) => {
+    const handleGetState = async(e: any) => {
         if (e.target.value === "none") {
             setState([]);    
             setSearch({ ...search, country: '', state: '' });
             return;
         }
-
+        
         try {
             setIsLoading(true);
             setSearch({ ...search, country: e.target.value });
@@ -298,7 +265,7 @@ const UserList = () => {
             const dataStates = await axiosAPI({
                 method: 'POST',
                 url: API_PATHS.getState,
-                payload: {code: e.target.value},
+                payload: { code: e.target.value },
                    header: { Authorization: `${auth}` }
             });
 
@@ -307,17 +274,13 @@ const UserList = () => {
             } else {
                 alert('Có lỗi xảy ra!');
             }
-
-            
-            
-
             setIsLoading(false);
         } catch (error: any) {
             throw new Error(error);
         }
 
         
-    }, [state])
+    }
 
     const selectionRange = {
         startDate: new Date(),
@@ -334,7 +297,7 @@ const UserList = () => {
         setIsDateRangepActive(false);
         
     }
-
+    
     const handleArrange = (e: any) => {
         const keyword = e.target.title;
         
@@ -377,11 +340,37 @@ const UserList = () => {
 
         setIsArrangepActive(!isArrangeActive);
     }
+
+    const handleCheckAll = (e: any) => {
+        const checked = e.target.checked;
+        const indexProducts: string[] = [];
+
+        if (userList) {
+            store?.users?.data?.map((user: any) => (
+                indexProducts.push(user.profile_id)
+            ))
+        }
+        
+
+        if (checked) {
+            setCheckedAll([...indexProducts]);
+            setIsChecked([...indexProducts]);
+        } else {
+            setCheckedAll([]);
+            setIsChecked([]);
+        }
+
+    }
+
+    const handleSetCurrentPage = (value: any) => {
+        if (typeof(value) === 'number') {
+            setCurrentPage(value);
+            setIsChecked([]);
+        } 
+    }
     
-    
-    
-    // console.log(item?.created);
-    console.log(userList);
+
+    console.log('render');
     
 
     return (
@@ -700,17 +689,12 @@ const UserList = () => {
                             <PanigationComponent
                                 pages={productsPerPage}
                                 changeTotal={perPage}
-                                setCurrentPage={(value: number) => { 
-                                    if (typeof(value) === 'number') {
-                                        setCurrentPage(value);
-                                        setIsChecked([]);
-                                    } 
-                                }}
+                                setCurrentPage={handleSetCurrentPage}
                             />
                     </div>
 
                     <div className={`changeNumber d-flex align-items-center`}>
-                        <p>{ recordsTotal } Items</p>
+                        <p>{ store.users.recordsTotal } Items</p>
 
                         <SelectComponent
                             className="width80"

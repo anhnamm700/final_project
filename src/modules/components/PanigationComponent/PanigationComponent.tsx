@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
   import { faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons'
 
@@ -114,4 +114,4 @@ function Pagination(props: Props) {
 }
 
 
-export default Pagination;
+export default memo(Pagination);

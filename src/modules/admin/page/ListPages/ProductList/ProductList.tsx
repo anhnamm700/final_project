@@ -206,7 +206,22 @@ const ProductList = () => {
             try {
                 setIsLoading(true);
 
-                const dataProducts = await axios.post(`https://api.gearfocus.div4.pgtest.co/api/products/list`, {"page": currentPage,"count": perPage,"search": search.seachKeyword,"category": search.category,"stock_status": search.stock,"availability": search.available,"vendor": search.vendor,"sort": search.sort,"order_by": search?.order_by,"search_type": search.searchIn.toString()});
+                // const dataProducts = await axios.post(`https://api.gearfocus.div4.pgtest.co/api/products/list`, {"page": currentPage,"count": perPage,"search": search.seachKeyword,"category": search.category,"stock_status": search.stock,"availability": search.available,"vendor": search.vendor,"sort": search.sort,"order_by": search?.order_by,"search_type": search.searchIn.toString()});
+                const dataProducts = await axiosAPI({
+                    method: 'POST',
+                    url: API_PATHS.products,
+                    payload: {
+                        "page": currentPage,
+                        "count": perPage,
+                        "search": search.seachKeyword,
+                        "category": search.category,
+                        "stock_status": search.stock,
+                        "availability": search.available,
+                        "vendor": search.vendor,
+                        "sort": search.sort,
+                        "order_by": search?.order_by,
+                        "search_type": search.searchIn.toString()}
+                });
 
                 if (!dataProducts?.data?.errors) {
                     dispatch(setProducts(dataProducts.data));
@@ -252,8 +267,6 @@ const ProductList = () => {
         searchVendor();
 
     }, [vendorKeyword]);
-
-   
 
     const handleSearchData = () => {
         setIsSearch(!isSearch);
@@ -491,7 +504,7 @@ const ProductList = () => {
         
     }, [product]);
 
-    console.log('re-render');
+    console.log('render');
     
         
     return (

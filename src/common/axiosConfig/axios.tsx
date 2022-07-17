@@ -7,7 +7,7 @@ interface Props {
     method: string,
     url: string,
     payload?: any,
-    header: any
+    header?: any
 }
 
 const axiosAPI = async(props: Props) => {

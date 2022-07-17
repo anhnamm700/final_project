@@ -21,7 +21,7 @@ const adminSlice = createSlice({
             state.products = {...action.payload};
         },
         setUsers: (state: any, action: any) => {
-            state.users = [...action.payload.data];
+            state.users = {...action.payload};
         },
         setCategories: (state: any, action: any) => {
             state.categories = [...action.payload];

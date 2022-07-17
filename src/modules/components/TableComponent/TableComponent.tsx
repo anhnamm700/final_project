@@ -25,11 +25,6 @@ interface Props {
 const TableComponent = (props: Props) => {
     const { data, isChecked, checked, isActive, onActive, setCheckedSearch, deleteItem, setPriceItem, setQuantityItem } = props;
     const navigate = useNavigate();
-    // const dataMap = data?.data;
-
-    console.log(data);
-    
-
     const detailPage = ROUTES.productDetail.slice(0, -3);
     const userDetail = ROUTES.userDetail.slice(0, -3);
 
