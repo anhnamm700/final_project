@@ -41,8 +41,6 @@ const ProductList = () => {
     const [checkedAll, setCheckedAll] = useState<any>([]);
     const [isReload, setIsReload] = useState<boolean>(false);
 
-    const [stockItem, setStockItem] = useState<any>([]);
-
     const [productsData, setProductsData] = useState<any>([]);
     const [isChecked, setIsChecked] = useState<any>([]);
     const [vendorList, setVendorList] = useState<any>([]);
@@ -71,6 +69,9 @@ const ProductList = () => {
     });
     
     const productsPerPage = Math.ceil(Number(store.products.recordsTotal) / perPage);
+
+    console.log(product);
+    
     
 
     useEffect(() => {
@@ -488,6 +489,9 @@ const ProductList = () => {
         }
     }, [selectedProduct, isActive]);
 
+    console.log(search);
+    
+
     
     useEffect(() => {
                 
@@ -504,9 +508,6 @@ const ProductList = () => {
         
     }, [product]);
 
-    console.log('render');
-    
-        
     return (
         <div className="warpper">
             {

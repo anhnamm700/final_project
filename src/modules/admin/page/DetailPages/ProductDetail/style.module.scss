@@ -7,13 +7,20 @@
     width: 100%;
     position: relative;
     color: #fff;
-    margin-bottom: 30px;
+    // margin-bottom: 30px;
 
     .titleGeneral {
         width: 250px;
         text-align: right;
         margin-right: 4px;
     }
+
+    
+}
+
+.editDescription {
+    margin-left: 40px;
+    width: 84%;
 }
 
 .reactSwitch {
@@ -188,7 +195,7 @@
 .selectCustom {
     display: flex;
     flex-direction: column;
-    margin-left: 12px;
+    margin-left: 4px;
     width: 800px;
     margin-bottom: 30px;
 

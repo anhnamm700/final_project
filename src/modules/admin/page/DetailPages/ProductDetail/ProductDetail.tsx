@@ -28,6 +28,7 @@ import CheckBoxComponent from 'modules/components/CheckBoxComponent';
 import InputComponent from 'modules/components/InputComponent';
 import SelectComponent from 'modules/components/SelectComponent';
 import ReactSelect from 'react-select';
+import { ROUTES } from 'configs/routes';
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -78,6 +79,9 @@ const ProductDetail = () => {
     const [isCustom, setIsCustom] = useState<boolean>(false);
     const [isMetaCustom, setIsMetaCustom] = useState<boolean>(false);
     const [isSalePrice, setIsSalePrice] = useState<boolean>(false);
+    const [checkValidate, setCheckValidate] = useState<any>({
+        categories: false
+    });
 
     const [isUpdate, setIsUpdate] = useState<boolean>(false);
 
@@ -100,17 +104,19 @@ const ProductDetail = () => {
         }
     });
 
-    // console.log(updatedSuccess);
-    
-
     useEffect(() => {
         try {
             const activeChange = async () => {
                 try {
+                    if (updatedComplete) {
+                        alert("Cập nhật thành công");
+                        window.scrollTo(0, 0);
+                    };
+
                     const productDetail = await axiosAPI({ method: 'post', url: `${API_PATHS.detailProduct}`, payload: { id: id }, header: { Authorization: `${auth}` } });
 
                     if (!productDetail?.data?.errors || productDetail.data.success) {
-                        const data = productDetail?.data?.data;
+                        const data = await productDetail?.data?.data;
                         setProduct(data);
                     } else {
                         alert('Có lỗi xảy ra!');
@@ -119,7 +125,7 @@ const ProductDetail = () => {
 
                     setIsLoading(false);
 
-                    if (updatedComplete) alert("Cập nhật thành công");
+                   
 
                 } catch (error: any) {
                     throw new Error(error);
@@ -133,21 +139,7 @@ const ProductDetail = () => {
         }
     }, [id, updatedSuccess]);
 
-    useEffect(() => {
-        if (productInfo?.vendor?.length === 0) return;
-
-        const id = setTimeout(() => {
-            const value = selectors?.vendors?.filter((vendor: any) => (
-                vendor?.name?.includes(productInfo?.vendor)
-            ));
-
-            if (value.length > 0) setVendorFilter(value);
-            else if (value.length === 0) setVendorFilter(['not']);
-
-        }, 500);
-
-        return () => clearTimeout(id);
-    }, [productInfo?.vendor]);
+    
     
 
     useEffect(() => {
@@ -213,6 +205,12 @@ const ProductDetail = () => {
             setIsCustom(false);
         }
 
+        if (product?.meta_desc_type === 'C') {
+            setIsMetaCustom(true);
+        } else {
+            setIsMetaCustom(false);
+        }
+
     }, [product]);
     
     
@@ -231,31 +229,9 @@ const ProductDetail = () => {
             setFiles([...e.target.files]);
         }
     }
-
-    // useEffect(() => {
-    //     if (!selectors?.vendors.some((item: any) => item.name === productInfo?.vendor) 
-    //     || productInfo?.name.trim().length === 0 || productInfo?.brand === null 
-    //     || productInfo?.images.length === 0 || productInfo?.categories.length === 0 
-    //     || Number(productInfo?.price) === 0 || Number(productInfo?.quantity) === 0) {
-    //         setisUpdate(true)
-    //     } else {
-    //         setisUpdate(false)
-    //     }
-        
-    // }, [productInfo?.vendor]);
-
-    useEffect(() => {
-
-        if (errorMessage?.vendor?.length === 0 && errorMessage?.name?.length === 0
-            && errorMessage?.brand?.length === 0 && errorMessage?.images?.length === 0 &&  errorMessage?.categories?.length === 0
-            && errorMessage?.description?.length === 0 && errorMessage?.price?.length === 0 &&  errorMessage?.quantity?.length === 0) {
-            setIsUpdate(false);
-        } else {
-            setIsUpdate(true);
-        }
-    }, [errorMessage]);
-
-// console.log(productInfo);
+    
+    console.log(productInfo.brand);
+    
 
     useEffect(() => {
         if (productInfo?.sale_price_type.label === '$') {
@@ -269,14 +245,39 @@ const ProductDetail = () => {
             setErrorMessage(validate({ ...productInfo, sale_price: '' }));
         }
     }, [productInfo?.sale_price, productInfo?.price, productInfo?.sale_price_type]);
+
+    useEffect(() => {
+        if (productInfo?.vendor?.length === 0) return;
+
+        const id = setTimeout(() => {
+            const value = selectors?.vendors?.filter((vendor: any) => (
+                vendor?.name?.includes(productInfo?.vendor)
+            ));
+
+            if (value.length > 0) {
+                setVendorFilter(value);
+            } else if (value.length === 0) {
+                setVendorFilter(['not']);
+            }
+
+        }, 500);
+
+        return () => clearTimeout(id);
+    }, [productInfo?.vendor]);
     
     useEffect(() => {
-        if (description) setProductInfo({ ...productInfo, description: description });
+        if (description) {
+            setProductInfo({ ...productInfo, description: description });
+            setIsUpdate(false);
+        } else {
+            setProductInfo({ ...productInfo, description: '' });
+            setIsUpdate(true);
+        }
         
     }, [description]);
+
     
-    
-    const handleUpdate = useCallback(async () => {
+    const handleUpdate = async () => {
         setIsLoading(true);
         try {
             const cateId = await productInfo?.categories?.map((item: any) => Number(item.value));
@@ -312,8 +313,8 @@ const ProductDetail = () => {
                 shipping_to_zones: shippingRequest,
                 og_tags_type: productInfo?.og_tags_type,
                 og_tags: productInfo?.og_tags_type === "1" ? productInfo?.og_tags : '',
-                meta_desc_type: productInfo?.meta_desc_type === "1" ? "C" : "A",
-                meta_description: productInfo?.meta_desc_type === "1" ? productInfo?.meta_description : '',
+                meta_desc_type: productInfo?.meta_desc_type,
+                meta_description: productInfo?.meta_desc_type === "C" ? productInfo?.meta_description : '',
                 meta_keywords: productInfo?.meta_keywords,
                 product_page_title: productInfo?.product_page_title,
                 facebook_marketing_enabled: productInfo?.facebook_marketing_enabled,
@@ -338,24 +339,24 @@ const ProductDetail = () => {
             // cắt ảnh từ vị trí thêm => hết
             const dataImages = productInfo?.images.splice(product.images.length, productInfo?.images.length);
 
-            if (dataImages.length === 0) {
+            if (dataImages.length === 0 && !productResponse?.data?.errors) {
                 setUpdatedComplete(!productResponse?.data?.errors);
                 setUpdatesSuccess(!updatedSuccess);
             } else {
                 if (!productResponse?.data?.errors && productResponse?.data?.success && dataImages) {
                     dataImages?.forEach(async(file: any, index: number) => {
                         const formDataImages = new FormData();
-                        await formDataImages.append('images[]', file);
-                        await formDataImages.append('order', JSON.parse(JSON.stringify(index)));
-                        await formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
+                        formDataImages.append('images[]', file);
+                        formDataImages.append('order', JSON.parse(JSON.stringify(index)));
+                        formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
                         const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages,  {headers: {Authorization: `${auth}`, 'Content-Type': 'multipart/form-data'}});
                         
-                        if (!imagesResponse?.data?.errors) {
+                        
+                        
+                        if (imagesResponse && !imagesResponse?.data?.errors) {
                             await setUpdatedComplete(!imagesResponse?.data?.errors);
                             await setUpdatesSuccess(!updatedSuccess);
                         }
-                        
-                        
                     });    
                 }
             }
@@ -366,7 +367,7 @@ const ProductDetail = () => {
             throw new Error(error);
         }   
         setIsLoading(false);
-    }, [productInfo]);
+    };
 
 
     const updateInfo = (index: number, value: string) => {
@@ -383,9 +384,8 @@ const ProductDetail = () => {
         copyOfBlocks.splice(id, 1);
         setProductInfo({ ...productInfo, shipping: [...copyOfBlocks] });
     }   
-
     
-
+    console.log('render');
     return (
         <div className={style.detailWrapper}>
             {
@@ -393,6 +393,7 @@ const ProductDetail = () => {
             }
 
             <Header
+                route={ROUTES.productList}
                 name={product?.name}
             />
 
@@ -415,7 +416,6 @@ const ProductDetail = () => {
                                     onFocus={() => setIsDisplay(true)}
                                     onChangeInput={(e: any) => {
                                         setProductInfo({ ...productInfo, vendor: e.target.value });
-                                        // console.log(selectors?.vendors?.filter((item: any) => item.id === e.target.value));
                                         
                                         setErrorMessage(validate({ ...productInfo, vendor: e.target.value }));
                                     }}
@@ -546,13 +546,15 @@ const ProductDetail = () => {
 
                             <div className={style.flexComponent}>
                                 <p className={style.titleInfo}>Mô tả</p>
-                                <CKEditorComponent
-                                    value={productInfo?.description}
-                                    onChange={(data: any) => {
-                                        setDescription(data);
-                                        setErrorMessage(validate({ ...productInfo, description: data }));
-                                    }}
-                                />
+                                <div className={style.editDescription}>
+                                    <CKEditorComponent
+                                        value={productInfo?.description}
+                                        onChange={(data: any) => {
+                                            setDescription(data);
+                                            setErrorMessage(validate({ ...productInfo, description: data }));
+                                        }}
+                                    />
+                                </div>
                                 {errorMessage.description ? <div className={style.messageError}>{errorMessage.description}</div> : null}
                             </div>
 
@@ -792,7 +794,7 @@ const ProductDetail = () => {
                                         </select>
 
                                         {
-                                            isCustom && (
+                                            (isCustom) && (
                                                 <textarea onChange={(e: any) => setProductInfo({ ...productInfo, og_tags: e.target.value })}>{ productInfo?.og_tags }</textarea>
                                             )
                                         }
@@ -803,13 +805,21 @@ const ProductDetail = () => {
                                     <p className={style.titleInfo}>Meta description</p>
                                     <div className={style.selectCustom}>
                                         <select onChange={(e: any) => {
-                                            setIsMetaCustom(!!Number(e.target.value));
-                                            setProductInfo({ ...productInfo, meta_description: '', meta_desc_type: e.target.value });
+                                            // console.log();
+                                            const value = e.target.value;
+                                            if (value === 'A') {
+                                                setIsMetaCustom(false);
+                                            } else if (value === 'C') {
+                                                setIsMetaCustom(true);
+                                            }
+                                            
+                                            // setIsMetaCustom(!!Number(e.target.value));
+                                            setProductInfo({ ...productInfo, meta_desc_type: e.target.value });
                                         }}>
                                             {
                                                 marketing?.data?.map((item: any) => {
                                                     return (
-                                                        <option selected={Number(productInfo?.meta_desc_type) === Number(item?.id)} key={item.id} value={item.id}>{ item.name }</option>
+                                                        <option selected={productInfo?.meta_desc_type === item?.id_t} key={item.id} value={item.id_t}>{ item.name }</option>
                                                     );
                                                 })
                                             }
@@ -862,7 +872,7 @@ const ProductDetail = () => {
 
                             
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
-                                <button disabled={isUpdate} className={style.updateButton} onClick={handleUpdate}>Update</button>
+                                <button disabled={productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0} className={style.updateButton} onClick={handleUpdate}>Update</button>
                             </div>
                             
                         </div>

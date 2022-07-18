@@ -156,7 +156,9 @@ const ProductAdd = () => {
     }, [description]);
 
     useEffect(() => {
-        if (errorMessage?.vendor?.length === 0 && errorMessage?.name?.length === 0
+        const checkVendor = selectors.vendors.find((item: any) => item.name === productInfo.vendor);
+
+        if (checkVendor && errorMessage?.vendor?.length === 0 && errorMessage?.name?.length === 0
             && errorMessage?.brand?.length === 0 && errorMessage?.images?.length === 0 &&  errorMessage?.categories?.length === 0
             && errorMessage?.description?.length === 0 && errorMessage?.price?.length === 0 &&  errorMessage?.quantity?.length === 0) {
             setIsUpdate(false);
@@ -225,26 +227,23 @@ const ProductAdd = () => {
 
             const dataImages = productInfo?.images;
 
-
             if (!productResponse?.data?.errors && productResponse?.data?.success && dataImages) {
                 const id = productResponse?.data?.data;
                 const detailPage = ROUTES.productDetail.slice(0, -3);
-                dataImages?.forEach(async(file: any, index: number) => {
+                await dataImages?.forEach(async(file: any, index: number) => {
                     const formDataImages = new FormData();
 
-                    await formDataImages.append('images[]', file);
-                    await formDataImages.append('order', JSON.parse(JSON.stringify(index)));
-                    await formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
+                    formDataImages.append('images[]', file);
+                    formDataImages.append('order', JSON.parse(JSON.stringify(index)));
+                    formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
                     const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages,  {headers: {Authorization: `${auth}`, 'Content-Type': 'multipart/form-data'}});
-                    
-                    
-                    navigate(`${detailPage}${id}`)
-                    
-                });    
-                // if (!imagesResponse?.data?.errors) {
-                //     alert("cập nhật thành công");
-                    
-                // }
+                });
+                
+                setTimeout(async() => {
+                    alert("Thêm thành công");
+                    await navigate(`${detailPage}${id}`);
+                }, 1000);
+                
             }
 
             setIsLoading(false);
@@ -278,6 +277,7 @@ const ProductAdd = () => {
             }
 
             <Header
+                route={ROUTES.productList}
                 name="Thêm sản phẩm"
             />
 
@@ -745,7 +745,7 @@ const ProductAdd = () => {
 
                             
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
-                                <button disabled={isUpdate} onClick={handleUpdate} className={style.updateButton}>Update</button>
+                                <button disabled={productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0} onClick={handleUpdate} className={style.updateButton}>Update</button>
                             </div>
                             
                         </div>

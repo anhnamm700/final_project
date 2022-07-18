@@ -33,8 +33,8 @@ export const currency = [
 export const marketing = {
     type: 'marketing',
     data: [
-        { id: 0, name: "Autogerated" },
-        { id: 1, name: "Custom" },
+        { id: 0, name: "Autogerated", id_t: 'A' },
+        { id: 1, name: "Custom", id_t: 'C' },
     ]
 }; 
 

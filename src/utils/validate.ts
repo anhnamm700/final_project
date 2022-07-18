@@ -9,7 +9,6 @@ const validateEmail = (email: string) => {
 };
 
 export const validate = (values: ProductInterface) => {
-    // console.log(values);
     
     const errors = {
         vendor: '',
