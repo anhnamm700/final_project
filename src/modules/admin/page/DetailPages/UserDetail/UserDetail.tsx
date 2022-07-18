@@ -1,33 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { useFormik } from 'formik';
-import axios from 'axios';
 import Cookies from 'js-cookie';
-import Switch from "react-switch";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faAngleUp, } from '@fortawesome/free-solid-svg-icons';
-import NumberFormat from 'react-number-format';
-import moment from 'moment';
 
 
 import style from './style.module.scss';
 import { ACCESS_TOKEN_KEY, memberShipUser } from 'utils/constant';
 import { userValidate } from 'utils/validate';
 import axiosAPI from 'common/axiosConfig/axios';
-import CKEditorComponent from 'modules/components/CKEditor';
-import InputCheckboxComponent from 'modules/components/InputCheckboxComponent';
 import InfoComponent from 'modules/components/InfoComponent';
-import ReactSelectComponent from 'modules/components/ReactSelectComponent';
 import LoadingComponent from 'modules/components/LoadingComponent/LoadingComponent';
-import MultiFileComponent from 'modules/components/MultiFileComponent';
 import Header from 'modules/admin/components/General/Header';
-import Content from 'modules/admin/components/General/Content';
 import { API_PATHS } from 'configs/api';
-import CheckBoxComponent from 'modules/components/CheckBoxComponent';
-import InputComponent from 'modules/components/InputComponent';
-import SelectComponent from 'modules/components/SelectComponent';
-import ReactSelect from 'react-select';
 
 const UserDetail = () => {
     const { id } = useParams();
@@ -71,11 +56,8 @@ const UserDetail = () => {
 
     
     const [updatedComplete, setUpdatedComplete] = useState<any>(null);
-    const [updatedSuccess, setUpdatesSuccess] = useState<boolean>(false);
     const [isDisplay, setIsDisplay] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-
-    const [isUpdate, setIsUpdate] = useState<boolean>(false);
 
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
 
@@ -167,15 +149,6 @@ const UserDetail = () => {
             vendor_id: user?.vendor_id,
         });
     }, [user, accRoles]);
-
-    useEffect(() => {
-        if (errorMessage?.firstName?.length === 0 && errorMessage?.lastName?.length === 0
-            && errorMessage?.email?.length === 0 && errorMessage?.password?.length === 0 &&  errorMessage?.rePassword?.length === 0) {
-            setIsUpdate(false);
-        } else {
-            setIsUpdate(true);
-        }
-    }, [errorMessage]);
     
     
 
@@ -472,7 +445,7 @@ const UserDetail = () => {
                 </div>
 
                 <div className={`${style.flexComponent} ${style.socialOption}`}>
-                    <button disabled={isUpdate} className={style.updateButton} onClick={handleUpdate}>Update</button>
+                    <button disabled={userInfo?.firstName?.length === 0 || userInfo?.lastName?.length === 0 || userInfo?.email?.length === 0} className={style.updateButton} onClick={handleUpdate}>Update</button>
                 </div>
             </div>
         </div>
