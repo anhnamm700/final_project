@@ -230,8 +230,6 @@ const ProductDetail = () => {
         }
     }
     
-    console.log(productInfo.brand);
-    
 
     useEffect(() => {
         if (productInfo?.sale_price_type.label === '$') {

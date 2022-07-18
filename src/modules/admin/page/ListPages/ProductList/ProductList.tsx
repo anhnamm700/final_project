@@ -70,10 +70,6 @@ const ProductList = () => {
     
     const productsPerPage = Math.ceil(Number(store.products.recordsTotal) / perPage);
 
-    console.log(product);
-    
-    
-
     useEffect(() => {
         const getCategories = async() => {
             try {
@@ -488,10 +484,6 @@ const ProductList = () => {
             throw new Error(error);
         }
     }, [selectedProduct, isActive]);
-
-    console.log(search);
-    
-
     
     useEffect(() => {
                 

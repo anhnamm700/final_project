@@ -13,6 +13,7 @@ import InfoComponent from 'modules/components/InfoComponent';
 import LoadingComponent from 'modules/components/LoadingComponent/LoadingComponent';
 import Header from 'modules/admin/components/General/Header';
 import { API_PATHS } from 'configs/api';
+import { ROUTES } from 'configs/routes';
 
 const UserDetail = () => {
     const { id } = useParams();
@@ -203,6 +204,7 @@ const UserDetail = () => {
 
             <Header
                 name={user?.email}
+                route={ROUTES.userList}
             />
 
             <div className={style.infoWrapper}>
