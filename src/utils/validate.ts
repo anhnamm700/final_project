@@ -56,7 +56,7 @@ export const validate = (values: ProductInterface) => {
         errors.description = 'Required';
     } 
 
-    if (!values.price) {
+    if (!values.price || Number(values.price) === 0) {
         errors.price = 'Required';
     } 
 

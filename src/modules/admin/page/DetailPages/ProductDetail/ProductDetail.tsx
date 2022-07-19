@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useFormik } from 'formik';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import Switch from "react-switch";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollar, faCalendar } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 import NumberFormat from 'react-number-format';
 import moment from 'moment';
 
@@ -22,12 +21,8 @@ import ReactSelectComponent from 'modules/components/ReactSelectComponent';
 import LoadingComponent from 'modules/components/LoadingComponent/LoadingComponent';
 import MultiFileComponent from 'modules/components/MultiFileComponent';
 import Header from 'modules/admin/components/General/Header';
-import Content from 'modules/admin/components/General/Content';
 import { API_PATHS } from 'configs/api';
 import CheckBoxComponent from 'modules/components/CheckBoxComponent';
-import InputComponent from 'modules/components/InputComponent';
-import SelectComponent from 'modules/components/SelectComponent';
-import ReactSelect from 'react-select';
 import { ROUTES } from 'configs/routes';
 
 const ProductDetail = () => {
@@ -89,8 +84,8 @@ const ProductDetail = () => {
     const selectors = useSelector((state: any) => state.admin);
 
     const countries = JSON.parse(JSON.stringify(selectors?.shippings));
-
-
+    const isDisableButton = productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0;
+    
     const memberships = [
         {membership_id: "4"}
     ]
@@ -323,16 +318,26 @@ const ProductDetail = () => {
 
             formDataProduct.append('productDetail', JSON.stringify(productDetail));
 
-            const productResponse = await axios.post(`${API_PATHS.createProduct}`,
-            {productDetail: formDataProduct.get('productDetail')},
-            {
-                headers: {
-                    Authorization: `${auth}`,
-                    'Content-Type': 'multipart/form-data'
-                },
+            // const productResponse = await axios.post(`${API_PATHS.createProduct}`,
+            // {productDetail: formDataProduct.get('productDetail')},
+            // {
+            //     headers: {
+            //         Authorization: `${auth}`,
+            //         'Content-Type': 'multipart/form-data'
+            //     },
                 
-            });
+            // });
 
+
+            const productResponse = await axiosAPI({
+                method: 'POST',
+                url: API_PATHS.createProduct,
+                payload: {productDetail: formDataProduct.get('productDetail')},
+                header: {
+                            Authorization: `${auth}`,
+                            'Content-Type': 'multipart/form-data'
+                        },
+            });
 
             // cắt ảnh từ vị trí thêm => hết
             const dataImages = productInfo?.images.splice(product.images.length, productInfo?.images.length);
@@ -347,9 +352,16 @@ const ProductDetail = () => {
                         formDataImages.append('images[]', file);
                         formDataImages.append('order', JSON.parse(JSON.stringify(index)));
                         formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
-                        const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages,  {headers: {Authorization: `${auth}`, 'Content-Type': 'multipart/form-data'}});
-                        
-                        
+                        // const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages,  {headers: {Authorization: `${auth}`, 'Content-Type': 'multipart/form-data'}});
+                        const imagesResponse = await axiosAPI({
+                            method: 'POST',
+                            url: API_PATHS.updateImage,
+                            payload: formDataImages,
+                            header: {
+                                        Authorization: `${auth}`, 
+                                        'Content-Type': 'multipart/form-data'
+                                    }
+                        });
                         
                         if (imagesResponse && !imagesResponse?.data?.errors) {
                             await setUpdatedComplete(!imagesResponse?.data?.errors);
@@ -383,7 +395,7 @@ const ProductDetail = () => {
         setProductInfo({ ...productInfo, shipping: [...copyOfBlocks] });
     }   
     
-    console.log('render');
+    
     return (
         <div className={style.detailWrapper}>
             {
@@ -673,18 +685,20 @@ const ProductDetail = () => {
                                     }}
                                 />
 
-                                <InfoComponent
-                                    isImportant={true}
-                                    title="Quantity in stock"
-                                    type="inputText"
-                                    value={productInfo?.quantity}
-                                    dataType="number"
-                                    onChangeInput={(e: any) => {
-                                        setProductInfo({ ...productInfo, quantity: e.target.value })
-                                        setErrorMessage(validate({ ...productInfo, quantity: e.target.value }));
-                                    }}
-                                />
-                                {errorMessage.quantity ? <div>{errorMessage.quantity}</div> : null}
+                                <div className={style.relativePosition}>
+                                    <InfoComponent
+                                        isImportant={true}
+                                        title="Quantity in stock"
+                                        type="inputText"
+                                        value={productInfo?.quantity}
+                                        dataType="number"
+                                        onChangeInput={(e: any) => {
+                                            setProductInfo({ ...productInfo, quantity: e.target.value })
+                                            setErrorMessage(validate({ ...productInfo, quantity: e.target.value }));
+                                        }}
+                                    />
+                                    {errorMessage.quantity ? <div className={style.messageError}>{errorMessage.quantity}</div> : null}
+                                </div>
                             </div>
                         
                             <div>
@@ -870,7 +884,7 @@ const ProductDetail = () => {
 
                             
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
-                                <button disabled={productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0} className={style.updateButton} onClick={handleUpdate}>Update</button>
+                                <button disabled={isDisableButton} className={isDisableButton ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Update</button>
                             </div>
                             
                         </div>

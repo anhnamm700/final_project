@@ -83,12 +83,13 @@ const ProductAdd = () => {
     const selectors = useSelector((state: any) => state.admin);
 
     const countries = JSON.parse(JSON.stringify(selectors?.shippings));
+    const isDisableButton = productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0;
 
     const memberships = [
         {membership_id: "4"}
     ]
     const membershipsConvert = memberships.map((item: any) => ( { label: "General", value: item.membership_id } ));
-
+    
 
     document.addEventListener('click', (e) => {
         const target = e.target as HTMLTextAreaElement
@@ -132,12 +133,6 @@ const ProductAdd = () => {
         }
     }
 
-    console.log(productInfo);
-    
-
-    // Z
-
-
     useEffect(() => {
         if (productInfo?.sale_price_type.label === '$') {
             if (Number(productInfo?.sale_price) > Number(productInfo?.price)) {
@@ -155,17 +150,6 @@ const ProductAdd = () => {
         if (description) setProductInfo({ ...productInfo, description: description });
     }, [description]);
 
-    useEffect(() => {
-        const checkVendor = selectors.vendors.find((item: any) => item.name === productInfo.vendor);
-
-        if (checkVendor && errorMessage?.vendor?.length === 0 && errorMessage?.name?.length === 0
-            && errorMessage?.brand?.length === 0 && errorMessage?.images?.length === 0 &&  errorMessage?.categories?.length === 0
-            && errorMessage?.description?.length === 0 && errorMessage?.price?.length === 0 &&  errorMessage?.quantity?.length === 0) {
-            setIsUpdate(false);
-        } else {
-            setIsUpdate(true);
-        }
-    }, [errorMessage]);
     
     const handleUpdate = useCallback(async () => {
         try {
@@ -215,14 +199,24 @@ const ProductAdd = () => {
 
             formDataProduct.append('productDetail', JSON.stringify(productDetail));
 
-            const productResponse = await axios.post(`${API_PATHS.createProduct}`,
-            {productDetail: formDataProduct.get('productDetail')},
-            {
-                headers: {
+            // const productResponse = await axios.post(`${API_PATHS.createProduct}`,
+            // {productDetail: formDataProduct.get('productDetail')},
+            // {
+            //     headers: {
+            //         Authorization: `${auth}`,
+            //         'Content-Type': 'multipart/form-data'
+            //     },
+                
+            // });
+
+            const productResponse = await axiosAPI({
+                method: 'POST',
+                url: API_PATHS.createProduct,
+                payload: { productDetail: formDataProduct.get('productDetail') },
+                header: {
                     Authorization: `${auth}`,
                     'Content-Type': 'multipart/form-data'
                 },
-                
             });
 
             const dataImages = productInfo?.images;
@@ -237,12 +231,15 @@ const ProductAdd = () => {
                     formDataImages.append('order', JSON.parse(JSON.stringify(index)));
                     formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
                     const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages,  {headers: {Authorization: `${auth}`, 'Content-Type': 'multipart/form-data'}});
+
+                    if (!imagesResponse?.data?.errors) {
+                        setTimeout(() => {
+                            navigate(`${detailPage}${id}`);
+                        }, 1000);
+                    }
                 });
                 
-                setTimeout(async() => {
-                    alert("Thêm thành công");
-                    await navigate(`${detailPage}${id}`);
-                }, 1000);
+                
                 
             }
 
@@ -556,18 +553,20 @@ const ProductAdd = () => {
                                     }}
                                 />
 
-                                <InfoComponent
-                                    isImportant={true}
-                                    title="Quantity in stock"
-                                    type="inputText"
-                                    value={productInfo?.quantity}
-                                    dataType="number"
-                                    onChangeInput={(e: any) => {
-                                        setProductInfo({ ...productInfo, quantity: e.target.value })
-                                        setErrorMessage(validate({ ...productInfo, quantity: e.target.value }));
-                                    }}
-                                />
-                                {errorMessage.quantity ? <div>{errorMessage.quantity}</div> : null}
+                                <div className={style.relativePosition}>
+                                    <InfoComponent
+                                        isImportant={true}
+                                        title="Quantity in stock"
+                                        type="inputText"
+                                        value={productInfo?.quantity}
+                                        dataType="number"
+                                        onChangeInput={(e: any) => {
+                                            setProductInfo({ ...productInfo, quantity: e.target.value })
+                                            setErrorMessage(validate({ ...productInfo, quantity: e.target.value }));
+                                        }}
+                                    />
+                                    {errorMessage.quantity ? <div className={style.messageError}>{errorMessage.quantity}</div> : null}
+                                </div>
                             </div>
                         
                             <div>
@@ -745,7 +744,7 @@ const ProductAdd = () => {
 
                             
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
-                                <button disabled={productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0} onClick={handleUpdate} className={style.updateButton}>Update</button>
+                            <button disabled={isDisableButton} className={isDisableButton ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Add</button>
                             </div>
                             
                         </div>
