@@ -1,29 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import Switch from "react-switch";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar } from '@fortawesome/free-solid-svg-icons';
-import NumberFormat from 'react-number-format';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Cookies from 'js-cookie';
 import moment from 'moment';
+import { useEffect, useState } from 'react';
+import NumberFormat from 'react-number-format';
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import Switch from "react-switch";
 
-
-import style from './style.module.scss';
-import { ACCESS_TOKEN_KEY, currency, marketing } from 'utils/constant';
-import { validate } from 'utils/validate';
 import axiosAPI from 'common/axiosConfig/axios';
+import { API_PATHS } from 'configs/api';
+import { ROUTES } from 'configs/routes';
+import Header from 'modules/admin/components/General/Header';
+import CheckBoxComponent from 'modules/components/CheckBoxComponent';
 import CKEditorComponent from 'modules/components/CKEditor';
-import InputCheckboxComponent from 'modules/components/InputCheckboxComponent';
 import InfoComponent from 'modules/components/InfoComponent';
-import ReactSelectComponent from 'modules/components/ReactSelectComponent';
+import ToastComponent from 'modules/components/ToastComponent';
+import InputCheckboxComponent from 'modules/components/InputCheckboxComponent';
 import LoadingComponent from 'modules/components/LoadingComponent/LoadingComponent';
 import MultiFileComponent from 'modules/components/MultiFileComponent';
-import Header from 'modules/admin/components/General/Header';
-import { API_PATHS } from 'configs/api';
-import CheckBoxComponent from 'modules/components/CheckBoxComponent';
-import { ROUTES } from 'configs/routes';
+import ReactSelectComponent from 'modules/components/ReactSelectComponent';
+import { ACCESS_TOKEN_KEY, currency, marketing } from 'utils/constant';
+import { validate } from 'utils/validate';
+import style from './style.module.scss';
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -63,6 +62,7 @@ const ProductDetail = () => {
         deleted_images: []
     });
     const [vendorFilter, setVendorFilter] = useState<any>([]);
+    const [isSuccess, setIsSuccess] = useState<boolean>(false);
     const [shippingZone, setShippingZone] = useState<any>({});
     const [isDisableAdd, setIsDisableAdd] = useState<boolean>(true);
     const [isSelectedDefault, setIsSelectedDefault] = useState<any>(true);
@@ -70,27 +70,21 @@ const ProductDetail = () => {
     const [updatedComplete, setUpdatedComplete] = useState<any>(null);
     const [updatedSuccess, setUpdatesSuccess] = useState<boolean>(false);
     const [isDisplay, setIsDisplay] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isCustom, setIsCustom] = useState<boolean>(false);
     const [isMetaCustom, setIsMetaCustom] = useState<boolean>(false);
     const [isSalePrice, setIsSalePrice] = useState<boolean>(false);
-    const [checkValidate, setCheckValidate] = useState<any>({
-        categories: false
-    });
-
-    const [isUpdate, setIsUpdate] = useState<boolean>(false);
 
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
     const selectors = useSelector((state: any) => state.admin);
 
     const countries = JSON.parse(JSON.stringify(selectors?.shippings));
     const isDisableButton = productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0;
-    
-    const memberships = [
-        {membership_id: "4"}
-    ]
-    const membershipsConvert = memberships.map((item: any) => ( { label: "General", value: item.membership_id } ));
 
+    const memberships = [
+        { membership_id: "4" }
+    ]
+    const membershipsConvert = memberships.map((item: any) => ({ label: "General", value: item.membership_id }));
 
     document.addEventListener('click', (e) => {
         const target = e.target as HTMLTextAreaElement
@@ -100,42 +94,31 @@ const ProductDetail = () => {
     });
 
     useEffect(() => {
-        try {
-            const activeChange = async () => {
-                try {
-                    if (updatedComplete) {
-                        alert("Cập nhật thành công");
-                        window.scrollTo(0, 0);
-                    };
+        const activeChange = async () => {
+            try {
+                setIsLoading(true);
+                if (updatedComplete) {
+                    setIsSuccess(true);
+                    window.scrollTo(0, 0);
+                };
 
-                    const productDetail = await axiosAPI({ method: 'post', url: `${API_PATHS.detailProduct}`, payload: { id: id }, header: { Authorization: `${auth}` } });
+                const productDetail = await axiosAPI({ method: 'post', url: `${API_PATHS.detailProduct}`, payload: { id: id }, header: { Authorization: `${auth}` } });
 
-                    if (!productDetail?.data?.errors || productDetail.data.success) {
-                        const data = await productDetail?.data?.data;
-                        setProduct(data);
-                    } else {
-                        alert('Có lỗi xảy ra!');
-                    }
-
-
-                    setIsLoading(false);
-
-                   
-
-                } catch (error: any) {
-                    throw new Error(error);
-                    
+                if (!productDetail?.data?.errors || productDetail.data.success) {
+                    const data = await productDetail?.data?.data;
+                    setProduct(data);
+                } else {
+                    alert('Có lỗi xảy ra!');
                 }
+
+                setIsLoading(false);
+            } catch (error: any) {
+                throw new Error(error);
             }
-
-            activeChange();
-        } catch (error: any) {
-            throw new Error(error);
         }
-    }, [id, updatedSuccess]);
 
-    
-    
+        activeChange();
+    }, [id, updatedSuccess]);
 
     useEffect(() => {
         setProductInfo({
@@ -150,7 +133,6 @@ const ProductDetail = () => {
             categories: product?.categories?.map((item: any, index: number) => {
                 const result = selectors?.categories.reduce((acc: any, elm: any) => {
                     if (elm.value === item.category_id) {
-
                         return elm;
                     };
                     return acc;
@@ -175,7 +157,7 @@ const ProductDetail = () => {
             arrival_date: product?.arrival_date,
             quantity: product?.quantity,
             shipping: product?.shipping,
-            shipping_default: product?.shipping?.find((item: any) => Number(item.id) === 1) ? product?.shipping?.find((item: any) => Number(item.id) === 1) :  {id: "1", zone_name: "Continental U.S.", price: "0"},
+            shipping_default: product?.shipping?.find((item: any) => Number(item.id) === 1) ? product?.shipping?.find((item: any) => Number(item.id) === 1) : { id: "1", zone_name: "Continental U.S.", price: "0" },
             description: product?.description,
             og_tags_type: product?.og_tags_type,
             og_tags: product?.og_tags,
@@ -207,8 +189,7 @@ const ProductDetail = () => {
         }
 
     }, [product]);
-    
-    
+
     useEffect(() => {
         if (vendorFilter.length > 0) setIsDisplay(true);
         if (vendorFilter.length === 1 && vendorFilter[0].name === productInfo.vendor) setIsDisplay(false);
@@ -224,7 +205,6 @@ const ProductDetail = () => {
             setFiles([...e.target.files]);
         }
     }
-    
 
     useEffect(() => {
         if (productInfo?.sale_price_type.label === '$') {
@@ -233,7 +213,6 @@ const ProductDetail = () => {
             } else {
                 setErrorMessage(validate({ ...productInfo, sale_price: '' }));
             }
-
         } else {
             setErrorMessage(validate({ ...productInfo, sale_price: '' }));
         }
@@ -257,19 +236,15 @@ const ProductDetail = () => {
 
         return () => clearTimeout(id);
     }, [productInfo?.vendor]);
-    
+
     useEffect(() => {
         if (description) {
             setProductInfo({ ...productInfo, description: description });
-            setIsUpdate(false);
         } else {
             setProductInfo({ ...productInfo, description: '' });
-            setIsUpdate(true);
         }
-        
     }, [description]);
 
-    
     const handleUpdate = async () => {
         setIsLoading(true);
         try {
@@ -282,11 +257,9 @@ const ProductDetail = () => {
                 }
             });
 
-            const shippingRequest = await [ ...shipping, { "id": Number(productInfo?.shipping_default?.id), "price": productInfo?.shipping_default?.price }].filter((item: any) => item);
-            
-            
+            const shippingRequest = await [...shipping, { "id": Number(productInfo?.shipping_default?.id), "price": productInfo?.shipping_default?.price }].filter((item: any) => item);
+
             const productDetail = await {
-                // ...product,
                 "vendor_id": productInfo?.vendor_id,
                 "name": productInfo?.name,
                 "brand_id": productInfo?.brand,
@@ -318,15 +291,14 @@ const ProductDetail = () => {
 
             formDataProduct.append('productDetail', JSON.stringify(productDetail));
 
-
             const productResponse = await axiosAPI({
                 method: 'POST',
                 url: API_PATHS.createProduct,
-                payload: {productDetail: formDataProduct.get('productDetail')},
+                payload: { productDetail: formDataProduct.get('productDetail') },
                 header: {
-                            Authorization: `${auth}`,
-                            'Content-Type': 'multipart/form-data'
-                        },
+                    Authorization: `${auth}`,
+                    'Content-Type': 'multipart/form-data'
+                },
             });
 
             // cắt ảnh từ vị trí thêm => hết
@@ -337,59 +309,61 @@ const ProductDetail = () => {
                 setUpdatesSuccess(!updatedSuccess);
             } else {
                 if (!productResponse?.data?.errors && productResponse?.data?.success && dataImages) {
-                    dataImages?.forEach(async(file: any, index: number) => {
+                    dataImages?.forEach(async (file: any, index: number) => {
                         const formDataImages = new FormData();
                         formDataImages.append('images[]', file);
                         formDataImages.append('order', JSON.parse(JSON.stringify(index)));
                         formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
-                        
+
                         const imagesResponse = await axiosAPI({
                             method: 'POST',
                             url: API_PATHS.updateImage,
                             payload: formDataImages,
                             header: {
-                                        Authorization: `${auth}`, 
-                                        'Content-Type': 'multipart/form-data'
-                                    }
+                                Authorization: `${auth}`,
+                                'Content-Type': 'multipart/form-data'
+                            }
                         });
-                        
+
                         if (imagesResponse && !imagesResponse?.data?.errors) {
-                            await setUpdatedComplete(!imagesResponse?.data?.errors);
-                            await setUpdatesSuccess(!updatedSuccess);
+                            setUpdatedComplete(!imagesResponse?.data?.errors);
+                            setUpdatesSuccess(!updatedSuccess);
                         }
-                    });    
+                    });
                 }
             }
 
-
-
         } catch (error: any) {
             throw new Error(error);
-        }   
+        }
         setIsLoading(false);
     };
-
 
     const updateInfo = (index: number, value: string) => {
         let copyOfBlocks = productInfo?.shipping;
         copyOfBlocks[index] = { ...copyOfBlocks[index], price: value };
-    
         setProductInfo({ ...productInfo, shipping: [...copyOfBlocks] });
     }
 
-    const handleRemoveCountries = (index: any) => {        
+    const handleRemoveCountries = (index: any) => {
         let copyOfBlocks = productInfo?.shipping;
         const id = Number(index.target.dataset.id);
-
         copyOfBlocks.splice(id, 1);
         setProductInfo({ ...productInfo, shipping: [...copyOfBlocks] });
-    }   
-    
-    
+    }
+
     return (
         <div className={style.detailWrapper}>
             {
                 isLoading && <LoadingComponent />
+            }
+
+            {
+                isSuccess && <ToastComponent
+                    show={isSuccess}
+                    content="Cập nhật thành công"
+                    setShow={() => setIsSuccess(false)}
+                />
             }
 
             <Header
@@ -416,7 +390,7 @@ const ProductDetail = () => {
                                     onFocus={() => setIsDisplay(true)}
                                     onChangeInput={(e: any) => {
                                         setProductInfo({ ...productInfo, vendor: e.target.value });
-                                        
+
                                         setErrorMessage(validate({ ...productInfo, vendor: e.target.value }));
                                     }}
                                     onKeyUp={(e) => {
@@ -431,7 +405,7 @@ const ProductDetail = () => {
                                 {errorMessage.vendor ? <div className={style.messageError}>{errorMessage.vendor}</div> : null}
 
                                 {
-                                    isDisplay && 
+                                    isDisplay &&
                                     (vendorFilter[0] === 'not' ? (
                                         <p className={style.vendorFilter}>Vendor not found</p>
                                     ) : (
@@ -476,7 +450,6 @@ const ProductDetail = () => {
                                     isMulti={false}
                                     onChange={(e: any) => {
                                         const value = e?.value;
-
                                         setProductInfo({ ...productInfo, brand: value });
                                         setErrorMessage(validate({ ...productInfo, brand: value }));
                                     }}
@@ -516,7 +489,6 @@ const ProductDetail = () => {
                                     onClick={(e: any) => {
                                         const id = Number(e.currentTarget.id);
                                         const fileId = e.currentTarget.dataset.id;
-
                                         productInfo?.images.splice(id, 1);
                                         setProductInfo({ ...productInfo, images: productInfo.images });
                                         setErrorMessage(validate({ ...productInfo }));
@@ -566,7 +538,7 @@ const ProductDetail = () => {
                                     className={style.reactSwitch}
                                 />
                             </div>
-                            
+
                             <div>
                                 <h6 className={style.tilteForm}>Prices & Inventory</h6>
                                 <div className={style.flexComponent}>
@@ -595,7 +567,7 @@ const ProductDetail = () => {
                                 </div>
 
                                 <div className={style.flexComponent}>
-                                    <p className={style.titleInfo}>Giá</p> 
+                                    <p className={style.titleInfo}>Giá</p>
 
                                     <div className={style.priceProduct}>
                                         <NumberFormat
@@ -606,10 +578,7 @@ const ProductDetail = () => {
                                             prefix={'$'}
                                             onValueChange={(values, sourceInfo) => {
                                                 const { formattedValue, value } = values;
-
                                                 setProductInfo({ ...productInfo, price: Number(value).toFixed(2) });
-                                                
-                                                // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                                 const { event, source } = sourceInfo;
                                             }}
                                         />
@@ -630,7 +599,7 @@ const ProductDetail = () => {
                                             isCheckedItem={productInfo?.participate_sale}
                                         />
 
-                                        { isSalePrice && (
+                                        {isSalePrice && (
                                             <div className={style.salePrice}>
                                                 <ReactSelectComponent
                                                     className={style.selectComponent}
@@ -648,17 +617,14 @@ const ProductDetail = () => {
                                                     thousandSeparator={true}
                                                     onValueChange={(values, sourceInfo) => {
                                                         const { formattedValue, value } = values;
-
                                                         setProductInfo({ ...productInfo, sale_price: Number(value).toFixed(2) });
-                                                        
-                                                        // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                                         const { event, source } = sourceInfo;
                                                     }}
                                                 />
                                                 {errorMessage.sale_price ? <div className={style.messageError}>{errorMessage.sale_price}</div> : null}
                                             </div>
-                                        ) }
-                                    </div>   
+                                        )}
+                                    </div>
                                 </div>
 
                                 <InfoComponent
@@ -690,9 +656,9 @@ const ProductDetail = () => {
                                     {errorMessage.quantity ? <div className={style.messageError}>{errorMessage.quantity}</div> : null}
                                 </div>
                             </div>
-                        
+
                             <div>
-                            <h6 className={style.tilteForm}>Shipping</h6>
+                                <h6 className={style.tilteForm}>Shipping</h6>
                                 <div className={style.flexComponent}>
                                     <p className={style.titleInfo}>{productInfo?.shipping_default?.zone_name}</p>
                                     <NumberFormat
@@ -702,41 +668,36 @@ const ProductDetail = () => {
                                         thousandSeparator={true}
                                         onValueChange={(values, sourceInfo) => {
                                             const { formattedValue, value } = values;
-
-                                            setProductInfo({ ...productInfo, shipping_default: {...productInfo?.shipping_default, price: Number(value).toFixed(2)} })
-                                            
-                                            // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
+                                            setProductInfo({ ...productInfo, shipping_default: { ...productInfo?.shipping_default, price: Number(value).toFixed(2) } })
                                             const { event, source } = sourceInfo;
                                         }}
-                                    /> 
+                                    />
                                 </div>
 
                                 {
-                                        productInfo?.shipping?.map((item: any, index: number) => {
-                                            if (Number(item?.id) === 1) return;
-                                            return (
-                                                <div className={`${style.flexComponent} ${style.countryList}`}>
-                                                    <p className={style.titleInfo}>{ item?.country || item?.zone_name }</p>
-                                                    <NumberFormat
-                                                        value={item?.price}
-                                                        displayType={'input'}
-                                                        className={style.numberFomat}
-                                                        thousandSeparator={true}
-                                                        onValueChange={(values, sourceInfo) => {
-                                                            const { formattedValue, value } = values;
-                                                            updateInfo(index, Number(value).toFixed(2));
-                                                            
-                                                            const { event, source } = sourceInfo;
-                                                        }}
-                                                    />
+                                    productInfo?.shipping?.map((item: any, index: number) => {
+                                        if (Number(item?.id) === 1) return;
+                                        return (
+                                            <div className={`${style.flexComponent} ${style.countryList}`}>
+                                                <p className={style.titleInfo}>{item?.country || item?.zone_name}</p>
+                                                <NumberFormat
+                                                    value={item?.price}
+                                                    displayType={'input'}
+                                                    className={style.numberFomat}
+                                                    thousandSeparator={true}
+                                                    onValueChange={(values, sourceInfo) => {
+                                                        const { formattedValue, value } = values;
+                                                        updateInfo(index, Number(value).toFixed(2));
+                                                        const { event, source } = sourceInfo;
+                                                    }}
+                                                />
 
-                                                    <p data-id={index} onClick={(index: any) => {
-                                                        // e.preventDefault();
-                                                        handleRemoveCountries(index);
-                                                    }} className={style.removeButton}>Remove</p>
-                                                </div>
-                                            );
-                                        })
+                                                <p data-id={index} onClick={(index: any) => {
+                                                    handleRemoveCountries(index);
+                                                }} className={style.removeButton}>Remove</p>
+                                            </div>
+                                        );
+                                    })
                                 }
                                 <div className={`${style.flexComponent} ${style.countriesBox}`}>
                                     <p className={style.titleInfo}></p>
@@ -748,16 +709,14 @@ const ProductDetail = () => {
                                         }}>
                                             <option selected={isSelectedDefault ? true : false}>Chọn thành phố</option>
                                             {
-                                                
                                                 countries?.map((item: any) => {
                                                     const checkDisplay = productInfo?.shipping?.some((ship: any) => item.id === ship.id);
-                                                    
                                                     return (
-                                                        <option 
-                                                            className={ checkDisplay ? style.optionHide : '' }
-                                                            value={item.id} 
-                                                            key={item.id} 
-                                                        >{ item.name }</option>
+                                                        <option
+                                                            className={checkDisplay ? style.optionHide : ''}
+                                                            value={item.id}
+                                                            key={item.id}
+                                                        >{item.name}</option>
                                                     );
                                                 })
                                             }
@@ -766,15 +725,12 @@ const ProductDetail = () => {
 
                                     <button disabled={isDisableAdd} onClick={() => {
                                         setIsSelectedDefault(true);
-                                        
-                                        setProductInfo({ ...productInfo, shipping: [ ...productInfo?.shipping, {  ...shippingZone  } ] });
-
+                                        setProductInfo({ ...productInfo, shipping: [...productInfo?.shipping, { ...shippingZone }] });
                                         setIsDisableAdd(true);
-                                        
                                     }}>Add</button>
                                 </div>
 
-                                
+
                             </div>
 
                             <div>
@@ -789,7 +745,7 @@ const ProductDetail = () => {
                                             {
                                                 marketing?.data?.map((item: any) => {
                                                     return (
-                                                        <option selected={Number(productInfo?.og_tags_type) === Number(item?.id)} key={item.id} value={item.id}>{ item.name }</option>
+                                                        <option selected={Number(productInfo?.og_tags_type) === Number(item?.id)} key={item.id} value={item.id}>{item.name}</option>
                                                     );
                                                 })
                                             }
@@ -797,7 +753,7 @@ const ProductDetail = () => {
 
                                         {
                                             (isCustom) && (
-                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, og_tags: e.target.value })}>{ productInfo?.og_tags }</textarea>
+                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, og_tags: e.target.value })}>{productInfo?.og_tags}</textarea>
                                             )
                                         }
                                     </div>
@@ -807,21 +763,18 @@ const ProductDetail = () => {
                                     <p className={style.titleInfo}>Meta description</p>
                                     <div className={style.selectCustom}>
                                         <select onChange={(e: any) => {
-                                            // console.log();
                                             const value = e.target.value;
                                             if (value === 'A') {
                                                 setIsMetaCustom(false);
                                             } else if (value === 'C') {
                                                 setIsMetaCustom(true);
                                             }
-                                            
-                                            // setIsMetaCustom(!!Number(e.target.value));
                                             setProductInfo({ ...productInfo, meta_desc_type: e.target.value });
                                         }}>
                                             {
                                                 marketing?.data?.map((item: any) => {
                                                     return (
-                                                        <option selected={productInfo?.meta_desc_type === item?.id_t} key={item.id} value={item.id_t}>{ item.name }</option>
+                                                        <option selected={productInfo?.meta_desc_type === item?.id_t} key={item.id} value={item.id_t}>{item.name}</option>
                                                     );
                                                 })
                                             }
@@ -829,7 +782,7 @@ const ProductDetail = () => {
 
                                         {
                                             isMetaCustom && (
-                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, meta_description: e.target.value })}>{ productInfo?.meta_description }</textarea>
+                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, meta_description: e.target.value })}>{productInfo?.meta_description}</textarea>
                                             )
                                         }
                                     </div>
@@ -872,11 +825,11 @@ const ProductDetail = () => {
                                 </div>
                             </div>
 
-                            
+
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
                                 <button disabled={isDisableButton} className={isDisableButton ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Update</button>
                             </div>
-                            
+
                         </div>
                     </div>
                 </div>

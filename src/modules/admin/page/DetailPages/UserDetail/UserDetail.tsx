@@ -4,11 +4,11 @@ import Cookies from 'js-cookie';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faAngleUp, } from '@fortawesome/free-solid-svg-icons';
 
-
 import style from './style.module.scss';
 import { ACCESS_TOKEN_KEY, memberShipUser } from 'utils/constant';
 import { userValidate } from 'utils/validate';
 import axiosAPI from 'common/axiosConfig/axios';
+import ToastComponent from 'modules/components/ToastComponent';
 import InfoComponent from 'modules/components/InfoComponent';
 import LoadingComponent from 'modules/components/LoadingComponent/LoadingComponent';
 import Header from 'modules/admin/components/General/Header';
@@ -54,15 +54,14 @@ const UserDetail = () => {
     const [accStatus, setAccStatus] = useState<any>({});
     const [accRoles, setAccRoles] = useState<any[]>([]);
     const [isUserTypeActive, setIsUserTypepActive] = useState<boolean>(false);
+    const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
-    
     const [updatedComplete, setUpdatedComplete] = useState<any>(null);
+    const [updatedSuccess, setUpdatesSuccess] = useState<boolean>(false);
     const [isDisplay, setIsDisplay] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
-
-    
 
     document.addEventListener('click', (e) => {
         const target = e.target as HTMLTextAreaElement
@@ -70,44 +69,37 @@ const UserDetail = () => {
             setIsDisplay(false);
         }
 
-        
-         if (target.dataset.set !== 'user-type') {
+        if (target.dataset.set !== 'user-type') {
             setIsUserTypepActive(false);
         }
     });
 
-
     useEffect(() => {
-        try {
-            const activeChange = async () => {
-                try {
-                    const userDetail = await axiosAPI({ method: 'post', url: `${API_PATHS.detailUser}`, payload: { id: id }, header: { Authorization: `${auth}` } });
+        const activeChange = async () => {
+            try {
+                setIsLoading(true);
+                if (updatedComplete) {
+                    setIsSuccess(true);
+                    window.scrollTo(0, 0);
+                };
+                const userDetail = await axiosAPI({ method: 'post', url: `${API_PATHS.detailUser}`, payload: { id: id }, header: { Authorization: `${auth}` } });
 
-                    if (!userDetail?.data?.errors || userDetail.data.success) {
-                        const { account_roles, account_status, info } = userDetail?.data?.data;
-                        
-                        setAccRoles(account_roles);
-                        setAccStatus(account_status);
-                        setUser(info);
-                    } else {
-                        alert('Có lỗi xảy ra!');
-                    }
+                if (!userDetail?.data?.errors || userDetail.data.success) {
+                    const { account_roles, account_status, info } = userDetail?.data?.data;
 
-
-                    setIsLoading(false);
-
-                } catch (error: any) {
-                    throw new Error(error);
-                    
+                    setAccRoles(account_roles);
+                    setAccStatus(account_status);
+                    setUser(info);
+                } else {
+                    alert('Có lỗi xảy ra!');
                 }
+                setIsLoading(false);
+            } catch (error: any) {
+                throw new Error(error);
             }
-
-            activeChange();
-        } catch (error: any) {
-            throw new Error(error);
         }
-    }, [id, updatedComplete]);
-    
+        activeChange();
+    }, [id, updatedSuccess]);
 
     useEffect(() => {
         setUserInfo({
@@ -150,8 +142,6 @@ const UserDetail = () => {
             vendor_id: user?.vendor_id,
         });
     }, [user, accRoles]);
-    
-    
 
     const handleUpdate = useCallback(async () => {
         setIsLoading(true);
@@ -179,27 +169,32 @@ const UserDetail = () => {
             });
 
             if (!userPresponse?.data?.errors) {
-                alert('Cập nhật thành công');
-                setUpdatedComplete(!updatedComplete);
-                window.scrollTo(0, 0);
+                setUpdatedComplete(!userPresponse?.data?.errors);
+                setUpdatesSuccess(!updatedSuccess);
             }
-
         } catch (error: any) {
             throw new Error(error);
-        }   
+        }
         setIsLoading(false);
     }, [userInfo]);
 
     const handleChangeUserType = (e: any) => {
         const { value, title } = e.target;
-        setUserInfo({ ...userInfo, roles: e.target.checked ? [...userInfo.roles, { id: value, name: title } ] : (userInfo.roles.filter((item: any) => item.id !== value)) })
+        setUserInfo({ ...userInfo, roles: e.target.checked ? [...userInfo.roles, { id: value, name: title }] : (userInfo.roles.filter((item: any) => item.id !== value)) })
     }
-
 
     return (
         <div className={style.detailWrapper}>
             {
                 isLoading && <LoadingComponent />
+            }
+
+            {
+                isSuccess && <ToastComponent
+                    show={isSuccess}
+                    content="Cập nhật thành công"
+                    setShow={() => setIsSuccess(false)}
+                />
             }
 
             <Header
@@ -217,27 +212,27 @@ const UserDetail = () => {
                         <div className={style.contentInfo}>
                             <div className={`d-flex`}>
                                 <p>Orders placed as a buyer: </p>
-                                <span>{ userInfo?.order_as_buyer }</span>
+                                <span>{userInfo?.order_as_buyer}</span>
                             </div>
 
                             <div className={`d-flex`}>
                                 <p>Vendor Income: </p>
-                                <span>${ userInfo?.income }</span>
+                                <span>${userInfo?.income}</span>
                             </div>
 
                             <div className={`d-flex`}>
                                 <p>Vendor Expense: </p>
-                                <span>${ userInfo?.expense }</span>
+                                <span>${userInfo?.expense}</span>
                             </div>
 
                             <div className={`d-flex`}>
                                 <p>Earning balance: </p>
-                                <span>${ userInfo?.earning }</span>
+                                <span>${userInfo?.earning}</span>
                             </div>
 
                             <div className={`d-flex`}>
                                 <p>Products listed as vendor: </p>
-                                <span>{ userInfo?.products_total }</span>
+                                <span>{userInfo?.products_total}</span>
                             </div>
                         </div>
 
@@ -323,7 +318,7 @@ const UserDetail = () => {
 
                                 <div className={`d-flex`}>
                                     <p>PaymentRails ID: </p>
-                                    <span>{ userInfo?.default_card_id }</span>
+                                    <span>{userInfo?.default_card_id}</span>
                                 </div>
                             </div>
                         </div>
@@ -333,36 +328,33 @@ const UserDetail = () => {
                             <div className={`d-flex flex-column`}>
                                 <div className={`d-flex`}>
                                     <p>Access level: </p>
-                                    <span>{ userInfo?.access_level }</span>
+                                    <span>{userInfo?.access_level}</span>
                                 </div>
 
                                 <div className={`d-flex ${style.selectMain}`}>
                                     <p>Roles: </p>
-                                    <span 
-                                        className={style.selectHome} 
+                                    <span
+                                        className={style.selectHome}
                                         data-set="user-type"
                                         onClick={() => setIsUserTypepActive(!isUserTypeActive)}
                                     >
-                                        { userInfo?.roles?.length === 0 ? "" : (userInfo?.roles?.map((item: any) => item.name).join(", ")) }
-
-                                        
+                                        {userInfo?.roles?.length === 0 ? "" : (userInfo?.roles?.map((item: any) => item.name).join(", "))}
                                     </span>
 
                                     {
-                                            isUserTypeActive ? <FontAwesomeIcon icon={faAngleUp} className={style.iconExpand} /> : <FontAwesomeIcon icon={faAngleDown}  className={style.iconExpand} />
-                                        }
+                                        isUserTypeActive ? <FontAwesomeIcon icon={faAngleUp} className={style.iconExpand} /> : <FontAwesomeIcon icon={faAngleDown} className={style.iconExpand} />
+                                    }
 
                                     {
                                         isUserTypeActive && (
                                             <div data-set="user-type" className={style.optionItem}>
                                                 {
-                                                    
                                                     accRoles.map((item: any, index: number) => (
                                                         <div className={style.memberArea} data-set="user-type">
-                                                            <p className={style.memberTitle} data-set="user-type">{ index === 0 ? "Membership" : '' }</p>
+                                                            <p className={style.memberTitle} data-set="user-type">{index === 0 ? "Membership" : ''}</p>
                                                             <div className={style.memberItem} data-set="user-type">
-                                                                <input checked={userInfo?.roles?.find((member: any) => member.id === item.id) ? true : false} data-set="user-type" title={item.name} value={item.id} type="checkbox" id={item?.id} onChange={handleChangeUserType}/>
-                                                                <label data-set="user-type" htmlFor={item?.id}>{ item.name }</label>
+                                                                <input checked={userInfo?.roles?.find((member: any) => member.id === item.id) ? true : false} data-set="user-type" title={item.name} value={item.id} type="checkbox" id={item?.id} onChange={handleChangeUserType} />
+                                                                <label data-set="user-type" htmlFor={item?.id}>{item.name}</label>
                                                             </div>
                                                         </div>
                                                     ))
@@ -375,11 +367,10 @@ const UserDetail = () => {
                                 <div className={`d-flex ${style.infoArea}`}>
                                     <p>Account status *</p>
                                     <select onChange={(e: any) => setUserInfo({ ...userInfo, status: e.target.value })} className={style.optionOther} >
-                                        <option selected={userInfo?.status === "E"} value="E">{ accStatus.E }</option>
-                                        <option selected={userInfo?.status === "D"} value="D">{ accStatus.D }</option>
-                                        <option selected={userInfo?.status === "U"} value="U">{ accStatus.U }</option>
+                                        <option selected={userInfo?.status === "E"} value="E">{accStatus.E}</option>
+                                        <option selected={userInfo?.status === "D"} value="D">{accStatus.D}</option>
+                                        <option selected={userInfo?.status === "U"} value="U">{accStatus.U}</option>
                                     </select>
-
                                 </div>
 
                                 <div className={`d-flex ${style.infoArea}`}>
@@ -392,7 +383,7 @@ const UserDetail = () => {
                                     <select className={style.optionOther} onChange={(e: any) => setUserInfo({ ...userInfo, membership_id: e.target.value })}>
                                         {
                                             memberShipUser?.map((item: any) => (
-                                                <option selected={userInfo?.membership_id === item.id} value={item.id}>{ item.name }</option>
+                                                <option selected={userInfo?.membership_id === item.id} value={item.id}>{item.name}</option>
                                             ))
                                         }
                                     </select>
@@ -400,17 +391,17 @@ const UserDetail = () => {
 
                                 <div className={`d-flex ${style.infoArea}`}>
                                     <p>Pending membership: </p>
-                                    <span>{ userInfo?.pending_membership_id || 'None'  }</span>
+                                    <span>{userInfo?.pending_membership_id || 'None'}</span>
                                 </div>
 
                                 <div className={`d-flex ${style.infoArea}`}>
                                     <label htmlFor='forceChangePassword'>Require to change password on next log in: </label>
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         className={style.optionOther}
                                         id="forceChangePassword"
-                                        value={userInfo?.forceChangePassword} 
-                                        checked={Number(userInfo?.forceChangePassword) === 1} 
+                                        value={userInfo?.forceChangePassword}
+                                        checked={Number(userInfo?.forceChangePassword) === 1}
                                         onChange={(e: any) => {
                                             if (e.target.checked) {
                                                 setUserInfo({ ...userInfo, forceChangePassword: '1' });
@@ -427,12 +418,12 @@ const UserDetail = () => {
                             <div className={`d-flex flex-column`}>
                                 <div className={`d-flex`}>
                                     <label htmlFor='taxExempt'>Tax exempt: </label>
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         className={style.optionOther}
-                                        value={userInfo?.taxExempt} 
+                                        value={userInfo?.taxExempt}
                                         id="taxExempt"
-                                        checked={Number(userInfo?.taxExempt) === 1} 
+                                        checked={Number(userInfo?.taxExempt) === 1}
                                         onChange={(e: any) => {
                                             if (e.target.checked) {
                                                 setUserInfo({ ...userInfo, taxExempt: '1' });

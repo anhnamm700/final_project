@@ -7,8 +7,9 @@ import store from './redux/store';
 import { PersistGate } from 'redux-persist/integration/react'
 import { persistStore } from 'redux-persist';
 import './MultiSelectDemo.css';
-import 'react-date-range/dist/styles.css'; // main style file
-import 'react-date-range/dist/theme/default.css'; // theme css file
+import 'react-date-range/dist/styles.css'; 
+import 'react-date-range/dist/theme/default.css'; 
+import 'react-toastify/dist/ReactToastify.css';
 
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';

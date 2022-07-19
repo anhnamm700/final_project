@@ -34,7 +34,7 @@ const UserAdd = () => {
     });
     const [isUserTypeActive, setIsUserTypepActive] = useState<boolean>(false);
 
-    
+
     const [isRolesActive, setIsRolesActive] = useState<boolean>(false);
     const [isDisplay, setIsDisplay] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -44,21 +44,21 @@ const UserAdd = () => {
     const navigate = useNavigate();
 
     const roles = store?.roles?.administrator;
-    
-    
+
+
     document.addEventListener('click', (e) => {
         const target = e.target as HTMLTextAreaElement
         if (target.dataset.set !== 'input-select') {
             setIsDisplay(false);
         }
 
-        
-         if (target.dataset.set !== 'user-type') {
+
+        if (target.dataset.set !== 'user-type') {
             setIsUserTypepActive(false);
         }
     });
 
-    
+
 
     const handleUpdate = useCallback(async () => {
         setIsLoading(true);
@@ -84,27 +84,21 @@ const UserAdd = () => {
                 header: { Authorization: `${auth}` }
             });
 
-            console.log(userPresponse);
-            
-
             if (!userPresponse?.data?.errors) {
                 alert('Tạo tài khoản thành công');
-                navigate(ROUTES.userList);
+                // navigate(ROUTES.userList);
             }
 
         } catch (error: any) {
             throw new Error(error);
-        }   
+        }
         setIsLoading(false);
     }, [userInfo]);
 
     const handleChangeUserType = (e: any) => {
         const { value, title } = e.target;
-        setUserInfo({ ...userInfo, roles: e.target.checked ? [...userInfo.roles, { id: value, name: title } ] : (userInfo.roles.filter((item: any) => item.id !== value)) })
+        setUserInfo({ ...userInfo, roles: e.target.checked ? [...userInfo.roles, { id: value, name: title }] : (userInfo.roles.filter((item: any) => item.id !== value)) })
     }
-
-    
-
 
     return (
         <div className={style.detailWrapper}>
@@ -240,31 +234,31 @@ const UserAdd = () => {
                                     isRolesActive && (
                                         <div className={`d-flex ${style.selectMain} ${style.selectMainHidden}`}>
                                             <p>Roles: </p>
-                                            <span 
-                                                className={style.selectHome} 
+                                            <span
+                                                className={style.selectHome}
                                                 data-set="user-type"
                                                 onClick={() => setIsUserTypepActive(!isUserTypeActive)}
                                             >
-                                                { userInfo?.roles?.length === 0 ? "" : (userInfo?.roles?.map((item: any) => item.name).join(", ")) }
+                                                {userInfo?.roles?.length === 0 ? "" : (userInfo?.roles?.map((item: any) => item.name).join(", "))}
 
-                                                
+
                                             </span>
 
                                             {
-                                                    isUserTypeActive ? <FontAwesomeIcon icon={faAngleUp} className={style.iconExpand} /> : <FontAwesomeIcon icon={faAngleDown}  className={style.iconExpand} />
-                                                }
+                                                isUserTypeActive ? <FontAwesomeIcon icon={faAngleUp} className={style.iconExpand} /> : <FontAwesomeIcon icon={faAngleDown} className={style.iconExpand} />
+                                            }
 
                                             {
                                                 isUserTypeActive && (
                                                     <div data-set="user-type" className={style.optionItem}>
                                                         {
-                                                            
+
                                                             roles.map((item: any, index: number) => (
                                                                 <div className={style.memberArea} data-set="user-type">
-                                                                    <p className={style.memberTitle} data-set="user-type">{ index === 0 ? "Membership" : '' }</p>
+                                                                    <p className={style.memberTitle} data-set="user-type">{index === 0 ? "Membership" : ''}</p>
                                                                     <div className={style.memberItem} data-set="user-type">
-                                                                        <input checked={userInfo?.roles?.find((member: any) => member.id === item.id) ? true : false} data-set="user-type" title={item.name} value={item.id} type="checkbox" id={item?.id} onChange={handleChangeUserType}/>
-                                                                        <label data-set="user-type" htmlFor={item?.id}>{ item.name }</label>
+                                                                        <input checked={userInfo?.roles?.find((member: any) => member.id === item.id) ? true : false} data-set="user-type" title={item.name} value={item.id} type="checkbox" id={item?.id} onChange={handleChangeUserType} />
+                                                                        <label data-set="user-type" htmlFor={item?.id}>{item.name}</label>
                                                                     </div>
                                                                 </div>
                                                             ))
@@ -281,7 +275,7 @@ const UserAdd = () => {
                                     <select className={style.optionOther} onChange={(e: any) => setUserInfo({ ...userInfo, membership_id: e.target.value })}>
                                         {
                                             memberShipUser?.map((item: any) => (
-                                                <option selected={userInfo?.membership_id === item.id} value={item.id}>{ item.name }</option>
+                                                <option selected={userInfo?.membership_id === item.id} value={item.id}>{item.name}</option>
                                             ))
                                         }
                                     </select>
@@ -289,17 +283,17 @@ const UserAdd = () => {
 
                                 <div className={`d-flex ${style.infoArea}`}>
                                     <p>Pending membership: </p>
-                                    <span>{ userInfo?.pending_membership_id || 'None'  }</span>
+                                    <span>{userInfo?.pending_membership_id || 'None'}</span>
                                 </div>
 
                                 <div className={`d-flex ${style.infoArea}`}>
                                     <label htmlFor='forceChangePassword'>Require to change password on next log in: </label>
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         className={style.optionOther}
                                         id="forceChangePassword"
-                                        value={userInfo?.forceChangePassword} 
-                                        checked={Number(userInfo?.forceChangePassword) === 1} 
+                                        value={userInfo?.forceChangePassword}
+                                        checked={Number(userInfo?.forceChangePassword) === 1}
                                         onChange={(e: any) => {
                                             if (e.target.checked) {
                                                 setUserInfo({ ...userInfo, forceChangePassword: '1' });
@@ -316,12 +310,12 @@ const UserAdd = () => {
                             <div className={`d-flex flex-column`}>
                                 <div className={`d-flex`}>
                                     <label htmlFor='taxExempt'>Tax exempt: </label>
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         className={style.optionOther}
-                                        value={userInfo?.taxExempt} 
+                                        value={userInfo?.taxExempt}
                                         id="taxExempt"
-                                        checked={Number(userInfo?.taxExempt) === 1} 
+                                        checked={Number(userInfo?.taxExempt) === 1}
                                         onChange={(e: any) => {
                                             if (e.target.checked) {
                                                 setUserInfo({ ...userInfo, taxExempt: '1' });

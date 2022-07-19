@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useFormik } from 'formik';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import Switch from "react-switch";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollar, faCalendar } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 import NumberFormat from 'react-number-format';
 import moment from 'moment';
 
@@ -17,17 +16,14 @@ import { validate } from 'utils/validate';
 import axiosAPI from 'common/axiosConfig/axios';
 import CKEditorComponent from 'modules/components/CKEditor';
 import InputCheckboxComponent from 'modules/components/InputCheckboxComponent';
+import ToastComponent from 'modules/components/ToastComponent';
 import InfoComponent from 'modules/components/InfoComponent';
 import ReactSelectComponent from 'modules/components/ReactSelectComponent';
 import LoadingComponent from 'modules/components/LoadingComponent/LoadingComponent';
 import MultiFileComponent from 'modules/components/MultiFileComponent';
 import Header from 'modules/admin/components/General/Header';
-import Content from 'modules/admin/components/General/Content';
 import { API_PATHS } from 'configs/api';
 import CheckBoxComponent from 'modules/components/CheckBoxComponent';
-import InputComponent from 'modules/components/InputComponent';
-import SelectComponent from 'modules/components/SelectComponent';
-import ReactSelect from 'react-select';
 import { ROUTES } from 'configs/routes';
 
 const ProductAdd = () => {
@@ -75,8 +71,10 @@ const ProductAdd = () => {
     const [isCustom, setIsCustom] = useState<boolean>(false);
     const [isMetaCustom, setIsMetaCustom] = useState<boolean>(false);
     const [isSalePrice, setIsSalePrice] = useState<boolean>(false);
-
-    const [isUpdate, setIsUpdate] = useState<boolean>(false);
+    const [isUpdateSuccess, setIsUpdateSuccess] = useState<any>({
+        success: false,
+        id: 0
+    });
     const navigate = useNavigate();
 
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
@@ -84,12 +82,12 @@ const ProductAdd = () => {
 
     const countries = JSON.parse(JSON.stringify(selectors?.shippings));
     const isDisableButton = productInfo.categories.length === 0 || Number(productInfo.price) === 0 || Number(productInfo.quantity) === 0 || productInfo.description.length === 0 || !selectors?.vendors.find((item: any) => item.name === productInfo.vendor) || !Number(productInfo.brand) || productInfo.images.length === 0;
+    const detailPage = ROUTES.productDetail.slice(0, -3);
 
     const memberships = [
-        {membership_id: "4"}
+        { membership_id: "4" }
     ]
-    const membershipsConvert = memberships.map((item: any) => ( { label: "General", value: item.membership_id } ));
-    
+    const membershipsConvert = memberships.map((item: any) => ({ label: "General", value: item.membership_id }));
 
     document.addEventListener('click', (e) => {
         const target = e.target as HTMLTextAreaElement
@@ -97,7 +95,6 @@ const ProductAdd = () => {
             setIsDisplay(false);
         }
     });
-
 
     useEffect(() => {
         if (productInfo?.vendor?.length === 0) return;
@@ -114,8 +111,8 @@ const ProductAdd = () => {
 
         return () => clearTimeout(id);
     }, [productInfo?.vendor]);
-    
-    
+
+
     useEffect(() => {
         if (vendorFilter.length > 0) setIsDisplay(true);
         if (vendorFilter.length === 1 && vendorFilter[0].name === productInfo.vendor) setIsDisplay(false);
@@ -128,7 +125,7 @@ const ProductAdd = () => {
 
     const handleFileChange = (e: any) => {
         if (e.target.files) {
-            
+
             setFiles([...e.target.files]);
         }
     }
@@ -145,12 +142,15 @@ const ProductAdd = () => {
             setErrorMessage(validate({ ...productInfo, sale_price: '' }));
         }
     }, [productInfo?.sale_price, productInfo?.price, productInfo?.sale_price_type]);
-    
+
     useEffect(() => {
         if (description) setProductInfo({ ...productInfo, description: description });
     }, [description]);
 
-    
+    useEffect(() => {
+        if (isUpdateSuccess.success) navigate(`${detailPage}${isUpdateSuccess.id}`);
+    }, [isUpdateSuccess]);
+
     const handleUpdate = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -163,9 +163,9 @@ const ProductAdd = () => {
                 }
             });
 
-            const shippingRequest = await [ ...shipping, { "id": Number(productInfo?.shipping_default?.id), "price": productInfo?.shipping_default?.price }].filter((item: any) => item);
-            
-            
+            const shippingRequest = await [...shipping, { "id": Number(productInfo?.shipping_default?.id), "price": productInfo?.shipping_default?.price }].filter((item: any) => item);
+
+
             const productDetail = await {
                 // ...product,
                 "vendor_id": productInfo?.vendor_id,
@@ -213,54 +213,56 @@ const ProductAdd = () => {
 
             if (!productResponse?.data?.errors && productResponse?.data?.success && dataImages) {
                 const id = productResponse?.data?.data;
-                const detailPage = ROUTES.productDetail.slice(0, -3);
-                await dataImages?.forEach(async(file: any, index: number) => {
+
+                await dataImages?.forEach(async (file: any, index: number) => {
                     const formDataImages = new FormData();
 
                     formDataImages.append('images[]', file);
                     formDataImages.append('order', JSON.parse(JSON.stringify(index)));
                     formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
-                    const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages,  {headers: {Authorization: `${auth}`, 'Content-Type': 'multipart/form-data'}});
+                    const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages, { headers: { Authorization: `${auth}`, 'Content-Type': 'multipart/form-data' } });
 
                     if (!imagesResponse?.data?.errors) {
-                        setTimeout(() => {
-                            navigate(`${detailPage}${id}`);
-                        }, 1000);
+                        setIsUpdateSuccess({
+                            success: true,
+                            id: id
+                        });
                     }
                 });
-                
-                
-                
             }
-
             setIsLoading(false);
-            
-
         } catch (error: any) {
             throw new Error(error);
-        }   
+        }
     }, [productInfo]);
-
 
     const updateInfo = (index: number, value: string) => {
         let copyOfBlocks = productInfo?.shipping;
         copyOfBlocks[index] = { ...copyOfBlocks[index], price: value };
-    
+
         setProductInfo({ ...productInfo, shipping: [...copyOfBlocks] });
     }
 
-    const handleRemoveCountries = (index: any) => {        
+    const handleRemoveCountries = (index: any) => {
         let copyOfBlocks = productInfo?.shipping;
         const id = Number(index.target.dataset.id);
 
         copyOfBlocks.splice(id, 1);
         setProductInfo({ ...productInfo, shipping: [...copyOfBlocks] });
-    }   
+    }
 
     return (
         <div className={style.detailWrapper}>
             {
                 isLoading && <LoadingComponent />
+            }
+
+            {
+                isUpdateSuccess.success && <ToastComponent
+                    show={isUpdateSuccess.success}
+                    content="Thêm thành công"
+                    setShow={() => setIsUpdateSuccess(false)}
+                />
             }
 
             <Header
@@ -301,7 +303,7 @@ const ProductAdd = () => {
                                 {errorMessage.vendor ? <div className={style.messageError}>{errorMessage.vendor}</div> : null}
 
                                 {
-                                    isDisplay && 
+                                    isDisplay &&
                                     (vendorFilter[0] === 'not' ? (
                                         <p className={style.vendorFilter}>Vendor not found</p>
                                     ) : (
@@ -434,7 +436,7 @@ const ProductAdd = () => {
                                     className={style.reactSwitch}
                                 />
                             </div>
-                            
+
                             <div>
                                 <h6 className={style.tilteForm}>Prices & Inventory</h6>
                                 <div className={style.flexComponent}>
@@ -463,7 +465,7 @@ const ProductAdd = () => {
                                 </div>
 
                                 <div className={style.flexComponent}>
-                                    <p className={style.titleInfo}>Giá</p> 
+                                    <p className={style.titleInfo}>Giá</p>
 
                                     <div className={style.priceProduct}>
                                         <NumberFormat
@@ -476,7 +478,7 @@ const ProductAdd = () => {
                                                 const { formattedValue, value } = values;
 
                                                 setProductInfo({ ...productInfo, price: Number(value).toFixed(2) });
-                                                
+
                                                 // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                                 const { event, source } = sourceInfo;
                                             }}
@@ -498,7 +500,7 @@ const ProductAdd = () => {
                                             isCheckedItem={productInfo?.participate_sale}
                                         />
 
-                                        { isSalePrice && (
+                                        {isSalePrice && (
                                             <div className={style.salePrice}>
                                                 <ReactSelectComponent
                                                     className={style.selectComponent}
@@ -518,15 +520,15 @@ const ProductAdd = () => {
                                                         const { formattedValue, value } = values;
 
                                                         setProductInfo({ ...productInfo, sale_price: Number(value).toFixed(2) });
-                                                        
+
                                                         // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                                         const { event, source } = sourceInfo;
                                                     }}
                                                 />
                                                 {errorMessage.sale_price ? <div className={style.messageError}>{errorMessage.sale_price}</div> : null}
                                             </div>
-                                        ) }
-                                    </div>   
+                                        )}
+                                    </div>
                                 </div>
 
                                 <InfoComponent
@@ -558,9 +560,9 @@ const ProductAdd = () => {
                                     {errorMessage.quantity ? <div className={style.messageError}>{errorMessage.quantity}</div> : null}
                                 </div>
                             </div>
-                        
+
                             <div>
-                            <h6 className={style.tilteForm}>Shipping</h6>
+                                <h6 className={style.tilteForm}>Shipping</h6>
                                 <div className={style.flexComponent}>
                                     <p className={style.titleInfo}>{productInfo?.shipping_default?.zone_name}</p>
                                     <NumberFormat
@@ -571,40 +573,40 @@ const ProductAdd = () => {
                                         onValueChange={(values, sourceInfo) => {
                                             const { formattedValue, value } = values;
 
-                                            setProductInfo({ ...productInfo, shipping_default: {...productInfo?.shipping_default, price: Number(value).toFixed(2)} })
-                                            
+                                            setProductInfo({ ...productInfo, shipping_default: { ...productInfo?.shipping_default, price: Number(value).toFixed(2) } })
+
                                             // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                             const { event, source } = sourceInfo;
                                         }}
-                                    /> 
+                                    />
                                 </div>
 
                                 {
-                                        productInfo?.shipping?.map((item: any, index: number) => {
-                                            if (Number(item?.id) === 1) return;
-                                            return (
-                                                <div className={`${style.flexComponent} ${style.countryList}`}>
-                                                    <p className={style.titleInfo}>{ item?.country || item?.zone_name }</p>
-                                                    <NumberFormat
-                                                        value={item?.price}
-                                                        displayType={'input'}
-                                                        className={style.numberFomat}
-                                                        thousandSeparator={true}
-                                                        onValueChange={(values, sourceInfo) => {
-                                                            const { formattedValue, value } = values;
-                                                            updateInfo(index, Number(value).toFixed(2));
-                                                            
-                                                            const { event, source } = sourceInfo;
-                                                        }}
-                                                    />
+                                    productInfo?.shipping?.map((item: any, index: number) => {
+                                        if (Number(item?.id) === 1) return;
+                                        return (
+                                            <div className={`${style.flexComponent} ${style.countryList}`}>
+                                                <p className={style.titleInfo}>{item?.country || item?.zone_name}</p>
+                                                <NumberFormat
+                                                    value={item?.price}
+                                                    displayType={'input'}
+                                                    className={style.numberFomat}
+                                                    thousandSeparator={true}
+                                                    onValueChange={(values, sourceInfo) => {
+                                                        const { formattedValue, value } = values;
+                                                        updateInfo(index, Number(value).toFixed(2));
 
-                                                    <p data-id={index} onClick={(index: any) => {
-                                                        // e.preventDefault();
-                                                        handleRemoveCountries(index);
-                                                    }} className={style.removeButton}>Remove</p>
-                                                </div>
-                                            );
-                                        })
+                                                        const { event, source } = sourceInfo;
+                                                    }}
+                                                />
+
+                                                <p data-id={index} onClick={(index: any) => {
+                                                    // e.preventDefault();
+                                                    handleRemoveCountries(index);
+                                                }} className={style.removeButton}>Remove</p>
+                                            </div>
+                                        );
+                                    })
                                 }
                                 <div className={`${style.flexComponent} ${style.countriesBox}`}>
                                     <p className={style.titleInfo}></p>
@@ -616,16 +618,16 @@ const ProductAdd = () => {
                                         }}>
                                             <option selected={isSelectedDefault ? true : false}>Chọn thành phố</option>
                                             {
-                                                
+
                                                 countries?.map((item: any) => {
                                                     const checkDisplay = productInfo?.shipping?.some((ship: any) => item.id === ship.id);
-                                                    
+
                                                     return (
-                                                        <option 
-                                                            className={ checkDisplay ? style.optionHide : '' }
-                                                            value={item.id} 
-                                                            key={item.id} 
-                                                        >{ item.name }</option>
+                                                        <option
+                                                            className={checkDisplay ? style.optionHide : ''}
+                                                            value={item.id}
+                                                            key={item.id}
+                                                        >{item.name}</option>
                                                     );
                                                 })
                                             }
@@ -634,15 +636,15 @@ const ProductAdd = () => {
 
                                     <button disabled={isDisableAdd} onClick={() => {
                                         setIsSelectedDefault(true);
-                                        
-                                        setProductInfo({ ...productInfo, shipping: [ ...productInfo?.shipping, {  ...shippingZone  } ] });
+
+                                        setProductInfo({ ...productInfo, shipping: [...productInfo?.shipping, { ...shippingZone }] });
 
                                         setIsDisableAdd(true);
-                                        
+
                                     }}>Add</button>
                                 </div>
 
-                                
+
                             </div>
 
                             <div>
@@ -657,7 +659,7 @@ const ProductAdd = () => {
                                             {
                                                 marketing?.data?.map((item: any) => {
                                                     return (
-                                                        <option selected={Number(productInfo?.og_tags_type) === Number(item?.id)} key={item.id} value={item.id}>{ item.name }</option>
+                                                        <option selected={Number(productInfo?.og_tags_type) === Number(item?.id)} key={item.id} value={item.id}>{item.name}</option>
                                                     );
                                                 })
                                             }
@@ -665,7 +667,7 @@ const ProductAdd = () => {
 
                                         {
                                             isCustom && (
-                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, og_tags: e.target.value })}>{ productInfo?.og_tags }</textarea>
+                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, og_tags: e.target.value })}>{productInfo?.og_tags}</textarea>
                                             )
                                         }
                                     </div>
@@ -681,7 +683,7 @@ const ProductAdd = () => {
                                             {
                                                 marketing?.data?.map((item: any) => {
                                                     return (
-                                                        <option selected={Number(productInfo?.meta_desc_type) === Number(item?.id)} key={item.id} value={item.id}>{ item.name }</option>
+                                                        <option selected={Number(productInfo?.meta_desc_type) === Number(item?.id)} key={item.id} value={item.id}>{item.name}</option>
                                                     );
                                                 })
                                             }
@@ -689,7 +691,7 @@ const ProductAdd = () => {
 
                                         {
                                             isMetaCustom && (
-                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, meta_description: e.target.value })}>{ productInfo?.meta_description }</textarea>
+                                                <textarea onChange={(e: any) => setProductInfo({ ...productInfo, meta_description: e.target.value })}>{productInfo?.meta_description}</textarea>
                                             )
                                         }
                                     </div>
@@ -732,11 +734,11 @@ const ProductAdd = () => {
                                 </div>
                             </div>
 
-                            
+
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
-                            <button disabled={isDisableButton} className={isDisableButton ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Add</button>
+                                <button disabled={isDisableButton} className={isDisableButton ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Add</button>
                             </div>
-                            
+
                         </div>
                     </div>
                 </div>

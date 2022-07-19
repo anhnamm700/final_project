@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { faChevronDown, faChevronUp, faSpinner, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
 
 import './style.css';
+import ToastComponent from "modules/components/ToastComponent";
 import { stocksStatus, availabilityStatus, pagesNumber, searchIn } from 'utils/constant';
 import ModalComponent from "modules/components/ModalComponent";
 import PanigationComponent from "modules/components/PanigationComponent";
@@ -21,26 +22,21 @@ import { setProducts, setCategories, setVendors, setBrands, setConditions, setCo
 import { API_PATHS } from "configs/api";
 import axiosAPI from "common/axiosConfig/axios";
 import InfoComponent from "modules/components/InfoComponent";
-import { applyMiddleware } from "redux";
-import { iteratorSymbol } from "immer/dist/internal";
-import { AnyAsyncThunk } from "@reduxjs/toolkit/dist/matchers";
 import { ROUTES } from "configs/routes";
 
 const ProductList = () => {
     const dispatch = useDispatch();
     const store = useSelector((state: any) => state.admin);
 
-    const auth = Cookies.get('token');
+    const auth = Cookies.get(ACCESS_TOKEN_KEY);
     const navigate = useNavigate();
 
     const [perPage, setPerpage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [product, setProduct] = useState<any>([]);
     const [isModalDelete, setIsModalDelete] = useState<boolean>(false);
-
     const [checkedAll, setCheckedAll] = useState<any>([]);
     const [isReload, setIsReload] = useState<boolean>(false);
-
     const [productsData, setProductsData] = useState<any>([]);
     const [isChecked, setIsChecked] = useState<any>([]);
     const [vendorList, setVendorList] = useState<any>([]);
@@ -54,6 +50,8 @@ const ProductList = () => {
     const [isModalEdit, setIsModalEdit] = useState<boolean>(false);
     const [isChange, setChange] = useState<boolean>(false);
     const [deleteId, setDeleteId] = useState<any>(null);
+    const [isDeleteSuccess, setIsDeleteSuccess] = useState<boolean>(false);
+    const [isChangeSuccess, setIsChangeSuccess] = useState<boolean>(false);
     const [isLoadingVendor, setIsLoadingVendor] = useState<boolean>(false);
     const [isExpandSearch, setIsExpandSearch] = useState<boolean>(false);
     const [isArrangeActive, setIsArrangepActive] = useState<boolean>(false);
@@ -67,28 +65,27 @@ const ProductList = () => {
         order_by: 'DESC',
         sort: 'name'
     });
-    
+
     const productsPerPage = Math.ceil(Number(store.products.recordsTotal) / perPage);
 
     useEffect(() => {
-        const getCategories = async() => {
+        const getCategories = async () => {
             try {
                 setIsLoading(true);
                 const dataCatgories = await axios.post(API_PATHS.categories);
 
                 if (!dataCatgories?.data?.errors) {
                     const result = dataCatgories?.data?.data?.map((item: any) => (
-                        { ...item ,value: item.id, label: item.name }
+                        { ...item, value: item.id, label: item.name }
                     ));
 
                     if (result) {
                         dispatch(setCategories(result));
                     }
-                    // dispatch(setCategories(dataCatgories.data));
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
-                
+
 
                 setIsLoading(false);
             } catch (error: any) {
@@ -96,7 +93,7 @@ const ProductList = () => {
             }
         }
 
-        const getShipping = async() => {
+        const getShipping = async () => {
             try {
                 setIsLoading(true);
                 const dataShipping = await axiosAPI({
@@ -110,7 +107,7 @@ const ProductList = () => {
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
-                
+
 
                 setIsLoading(false);
             } catch (error: any) {
@@ -118,11 +115,14 @@ const ProductList = () => {
             }
         }
 
-        const getBrands = async() => {
+        const getBrands = async () => {
             try {
                 setIsLoading(true);
-
-                const dataBrands = await axios.get(`https://api.gearfocus.div4.pgtest.co/apiAdmin/brands/list`, { headers: { Authorization: `${auth}` } });
+                const dataBrands = await axiosAPI({
+                    method: 'POST',
+                    url: API_PATHS.getBrands,
+                    header: { Authorization: `${auth}` }
+                });
 
                 if (!dataBrands?.data?.errors) {
                     const result = dataBrands?.data?.data?.map((item: any) => (
@@ -132,59 +132,70 @@ const ProductList = () => {
                     if (result) {
                         dispatch(setBrands(result));
                     }
-
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
-                
-
                 setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);
             }
         }
 
-        const getVendors = async() => {
+        const getVendors = async () => {
             try {
                 setIsLoading(true);
-
-                const dataVendors = await axios.get(`https://api.gearfocus.div4.pgtest.co/apiAdmin/vendors/list`, { headers: { Authorization: `${auth}` } });
+                const dataVendors = await axiosAPI({
+                    method: 'POST',
+                    url: API_PATHS.getVendors,
+                    header: { Authorization: `${auth}` }
+                });
 
                 if (!dataVendors?.data?.errors) {
                     dispatch(setVendors(dataVendors.data));
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
-                
-
                 setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);
             }
         }
 
-        const getConditions = async() => {
+        const getConditions = async () => {
             try {
-                const dataConditions = await axios.get(`https://api.gearfocus.div4.pgtest.co/apiAdmin/conditions/list`, { headers: { Authorization: `${auth}` } });
+                setIsLoading(true);
+                const dataConditions = await axiosAPI({
+                    method: 'POST',
+                    url: API_PATHS.getConditions,
+                    header: { Authorization: `${auth}` }
+                });
+
                 if (!dataConditions?.data?.errors) {
                     dispatch(setConditions(dataConditions.data));
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
+                setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);
             }
         }
 
-        const getCountries = async() => {
+        const getCountries = async () => {
             try {
-                const dataCountries = await axios.get(API_PATHS.getCountries, { headers: { Authorization: `${auth}` } });
-                
+                setIsLoading(true);
+                const dataCountries = await axiosAPI({
+                    method: 'POST',
+                    url: API_PATHS.getCountries,
+                    header: { Authorization: `${auth}` }
+                });
+
                 if (!dataCountries?.data?.errors) {
                     dispatch(setCountries(dataCountries?.data));
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
+                setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);
             }
@@ -199,11 +210,9 @@ const ProductList = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        const getProducts = async() => {
+        const getProducts = async () => {
             try {
                 setIsLoading(true);
-
-                // const dataProducts = await axios.post(`https://api.gearfocus.div4.pgtest.co/api/products/list`, {"page": currentPage,"count": perPage,"search": search.seachKeyword,"category": search.category,"stock_status": search.stock,"availability": search.available,"vendor": search.vendor,"sort": search.sort,"order_by": search?.order_by,"search_type": search.searchIn.toString()});
                 const dataProducts = await axiosAPI({
                     method: 'POST',
                     url: API_PATHS.products,
@@ -217,7 +226,8 @@ const ProductList = () => {
                         "vendor": search.vendor,
                         "sort": search.sort,
                         "order_by": search?.order_by,
-                        "search_type": search.searchIn.toString()}
+                        "search_type": search.searchIn.toString()
+                    }
                 });
 
                 if (!dataProducts?.data?.errors) {
@@ -226,26 +236,27 @@ const ProductList = () => {
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
-                
-
                 setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);
             }
         }
-
         getProducts();
     }, [dispatch, perPage, currentPage, isSearch, isChange, isReload, isArrangeActive]);
-    
+
     useEffect(() => {
-        const searchVendor = async() => {
+        const searchVendor = async () => {
             if (vendorKeyword.trim().length === 0) {
                 setVendorList([]);
             } else {
                 try {
                     setIsLoadingVendor(true);
-
-                    const dataVendors = await axios.post(`https://api.gearfocus.div4.pgtest.co/apiAdmin/vendors/list`,{search: `${vendorKeyword}`}, { headers: { Authorization: `${auth}` } });
+                    const dataVendors = await axiosAPI({
+                        method: 'POST',
+                        url: API_PATHS.getVendors,
+                        payload: { search: `${vendorKeyword}` },
+                        header: { Authorization: `${auth}` }
+                    });
 
                     if (!dataVendors?.data?.errors) {
                         setVendorList(dataVendors?.data?.data);
@@ -256,13 +267,10 @@ const ProductList = () => {
                     setIsLoadingVendor(false);
                 } catch (error: any) {
                     throw new Error(error);
-                    
                 }
             };
         }
-
         searchVendor();
-
     }, [vendorKeyword]);
 
     const handleSearchData = () => {
@@ -291,13 +299,13 @@ const ProductList = () => {
         if (checked) {
             setIsChecked([...isChecked, value]);
         } else {
-            setIsChecked(isChecked.filter((item: any) => item!== value));
+            setIsChecked(isChecked.filter((item: any) => item !== value));
         }
     }
-    
+
     const handleArrange = (e: any) => {
         const keyword = e.target.title;
-        
+
         const changeArrange = (keyword: string) => {
             if (search?.sort !== keyword) {
                 setSearch({ ...search, sort: keyword });
@@ -314,7 +322,7 @@ const ProductList = () => {
             case 'sku':
                 changeArrange(keyword);
                 break;
-            
+
             case 'name':
                 changeArrange(keyword);
                 break;
@@ -327,18 +335,17 @@ const ProductList = () => {
                 changeArrange(keyword);
                 break;
 
-            case 'vendor': 
+            case 'vendor':
                 changeArrange(keyword);
                 break;
 
-            case 'arrivalDate': 
+            case 'arrivalDate':
                 changeArrange(keyword);
                 break;
 
             default:
                 break;
         }
-
         setIsArrangepActive(!isArrangeActive);
     }
 
@@ -359,13 +366,13 @@ const ProductList = () => {
             setCheckedAll([]);
             setIsChecked([]);
         }
-
     }
 
-    const handleDeleteProducts = useCallback(async() => {
+    const handleDeleteProducts = useCallback(async () => {
         setIsLoading(true);
         if (checkedAll.length === 0 && isChecked.length > 0) {
-           try {
+            try {
+                setIsLoading(true);
                 const dataResponse = await axiosAPI({
                     method: 'POST',
                     url: API_PATHS.editProduct,
@@ -374,15 +381,17 @@ const ProductList = () => {
                 });
 
                 if (!dataResponse?.data?.errors) {
-                    alert("Xóa thành công");
+                    setIsDeleteSuccess(true);
                     setIsReload(!isReload);
                 }
-           } catch (error: any) {
+                setIsLoading(false);
+            } catch (error: any) {
                 throw new Error(error);
-           }
-            
+            }
+
         } else if (checkedAll.length > 0) {
             try {
+                setIsLoading(true);
                 const dataResponse = await axiosAPI({
                     method: 'POST',
                     url: API_PATHS.editProduct,
@@ -391,14 +400,16 @@ const ProductList = () => {
                 });
 
                 if (!dataResponse?.data?.errors) {
-                    alert("Xóa thành công");
+                    setIsDeleteSuccess(true);
                     setIsReload(!isReload);
                 }
+                setIsLoading(true);
             } catch (error: any) {
                 throw new Error(error);
             }
         } else if (!!Number(deleteId)) {
             try {
+                setIsLoading(true);
                 const dataResponse = await axiosAPI({
                     method: 'POST',
                     url: API_PATHS.editProduct,
@@ -407,20 +418,19 @@ const ProductList = () => {
                 });
 
                 if (!dataResponse?.data?.errors) {
-                    alert("Xóa thành công");
+                    setIsDeleteSuccess(true);
                     setIsReload(!isReload);
                 }
+                setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);
             }
-        } 
-
+        }
         setIsModalDelete(false);
         window.scrollTo(0, 0);
         setIsLoading(false);
-            
     }, [checkedAll, isChecked, deleteId]);
-    
+
 
     const handleActiveProduct = (value: any) => {
         const values = value?.target?.parentNode?.closest("tr")?.id;
@@ -433,7 +443,7 @@ const ProductList = () => {
         }
     }
 
-    const handleEditProducts = useCallback(async() => {
+    const handleEditProducts = useCallback(async () => {
         try {
             const dataResponse = await axiosAPI({
                 method: 'POST',
@@ -443,39 +453,40 @@ const ProductList = () => {
             });
 
             if (!dataResponse?.data?.errors) {
-                alert("Cập nhật thành công");
+                setIsChangeSuccess(true);
                 setIsReload(!isReload);
             }
-
             setIsModalEdit(false);
             window.scrollTo(0, 0);
-
         } catch (error: any) {
             throw new Error(error);
-            
         }
     }, [productsData]);
 
-    
-
     const handleConfirmChange = useCallback(() => {
         try {
-            const activeChange = async() => {
+            const activeChange = async () => {
                 if (!selectedProduct) return;
-    
+
                 try {
-                    const dataActive = await axios.post(`https://api.gearfocus.div4.pgtest.co/apiAdmin/products/edit`,{params: [{id: selectedProduct, enable: !!Number(isActive) ? 0 : 1}]}, { headers: { Authorization: `${auth}` } });
-    
+                    setIsLoading(true);
+                    const dataActive = await axiosAPI({
+                        method: 'POST',
+                        url: API_PATHS.editProduct,
+                        payload: { params: [{ id: selectedProduct, enable: !!Number(isActive) ? 0 : 1 }] },
+                        header: { Authorization: `${auth}` }
+                    });
+
                     if (!dataActive?.data?.errors || dataActive.data.data) {
+                        setIsChangeSuccess(true);
                         setChange(!isChange);
                     } else {
                         alert('Có lỗi xảy ra!');
                     }
-    
                     setIsModalActive(false);
-    
-                } catch (error) {
-                    
+                    setIsLoading(false);
+                } catch (error: any) {
+                    throw new Error(error);
                 }
             }
 
@@ -484,33 +495,29 @@ const ProductList = () => {
             throw new Error(error);
         }
     }, [selectedProduct, isActive]);
-    
+
     useEffect(() => {
-                
         const productsStore = store?.products?.data;
         const products = product.map((item: any, index: number) => {
             if (item.id === productsStore[index].id && (item.price !== productsStore[index].price || item.amount !== productsStore[index].amount)) {
-                return { id: item.id, price:  Number(item.price).toFixed(2).toString(), stock: item.amount };
+                return { id: item.id, price: Number(item.price).toFixed(2).toString(), stock: item.amount };
             }
         }).filter((item: any) => item);
 
         setProductsData(products);
-        
-        
-        
     }, [product]);
 
     return (
         <div className="warpper">
             {
-                isLoading && <LoadingComponent/>
+                isLoading && <LoadingComponent />
             }
             <h2 className="title">Danh sách sản phẩm</h2>
 
             <div>
                 {
-                    isModalActive && 
-                    
+                    isModalActive &&
+
                     <ModalComponent
                         isClose={isModalActive}
                         content="Bạn có muốn thay đổi trường này không?"
@@ -520,7 +527,7 @@ const ProductList = () => {
                 }
 
                 {
-                    isModalDelete && 
+                    isModalDelete &&
 
                     <ModalComponent
                         isClose={isModalDelete}
@@ -531,12 +538,28 @@ const ProductList = () => {
                 }
 
                 {
-                    isModalEdit && 
+                    isModalEdit &&
                     <ModalComponent
                         isClose={isModalEdit}
                         content="Bạn có muốn thay đổi không?"
                         onClose={() => setIsModalEdit(false)}
                         onConfirm={handleEditProducts}
+                    />
+                }
+
+                {
+                    isDeleteSuccess && <ToastComponent
+                        show={isDeleteSuccess}
+                        content="Xóa thành công"
+                        setShow={() => setIsDeleteSuccess(false)}
+                    />
+                }
+
+                {
+                    isChangeSuccess && <ToastComponent
+                        show={isChangeSuccess}
+                        content="Thay đổi thành công"
+                        setShow={() => setIsChangeSuccess(false)}
                     />
                 }
 
@@ -546,11 +569,11 @@ const ProductList = () => {
                             type="inputText"
                             placeholder="Seach Keywords"
                             className="homeSearch"
-                            onChangeInput={(value) => setSearch({ ...search,  seachKeyword: value.target.value})}
+                            onChangeInput={(value) => setSearch({ ...search, seachKeyword: value.target.value })}
                             onKeyUp={(e: any) => {
                                 if (e.keyCode === 8) {
                                     if (search?.seachKeyword.trim().length === 0) {
-                                        setSearch({ ...search,  category: e.target.value})   
+                                        setSearch({ ...search, category: e.target.value })
                                     }
                                 }
                             }}
@@ -558,14 +581,14 @@ const ProductList = () => {
 
                         <SelectComponent
                             className="width300"
-                            data={store.categories} 
-                            onSelectChange={(e: any) => setSearch({ ...search,  category: e.target.value})}
+                            data={store.categories}
+                            onSelectChange={(e: any) => setSearch({ ...search, category: e.target.value })}
                         />
 
                         <SelectComponent
                             className="width300"
                             data={stocksStatus}
-                            onSelectChange={(e: any) => setSearch({ ...search,  stock: e.target.value})}
+                            onSelectChange={(e: any) => setSearch({ ...search, stock: e.target.value })}
                         />
 
                         <ButtonComponent
@@ -603,7 +626,7 @@ const ProductList = () => {
                                         <SelectComponent
                                             className="width300"
                                             data={availabilityStatus}
-                                            onSelectChange={(e: any) => setSearch({ ...search,  available: e.target.value})}
+                                            onSelectChange={(e: any) => setSearch({ ...search, available: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -626,7 +649,7 @@ const ProductList = () => {
                                                 }
                                             }}
                                         />
-                                        
+
                                         {
                                             isLoadingVendor && <FontAwesomeIcon icon={faSpinner} className="vendor-spinner" />
                                         }
@@ -639,13 +662,12 @@ const ProductList = () => {
                                                             <p key={index} onClick={() => {
                                                                 setSearch({ ...search, vendor: vendor.name });
                                                                 setVendorList([]);
-                                                                
                                                                 setSelectedVendor(vendor.name);
-                                                            }} className="vendor-item">{ vendor.name }</p>
+                                                            }} className="vendor-item">{vendor.name}</p>
                                                         ))
                                                     }
 
-                                                </div> 
+                                                </div>
                                             )
                                         }
                                     </div>
@@ -653,8 +675,6 @@ const ProductList = () => {
                             </div>
                         )
                     }
-
-                        
                 </div>
 
                 <div className="expand-btn">
@@ -662,7 +682,7 @@ const ProductList = () => {
                         variant=""
                         value=""
                         type="button"
-                        icon={isExpandSearch ? <FontAwesomeIcon icon={faChevronUp}/> : <FontAwesomeIcon icon={faChevronDown}/>}
+                        icon={isExpandSearch ? <FontAwesomeIcon icon={faChevronUp} /> : <FontAwesomeIcon icon={faChevronDown} />}
                         size="n"
                         onClick={() => setIsExpandSearch(!isExpandSearch)}
                     />
@@ -683,20 +703,20 @@ const ProductList = () => {
                         <thead>
                             <tr>
                                 <th colSpan={2} className="widthTable100">
-                                     <input
+                                    <input
                                         type="checkbox"
                                         onChange={handleCheckAll}
                                         value="all"
-                                        />
+                                    />
                                 </th>
 
-                                <th className="widthTable300"><span title="sku" onClick={handleArrange}>SKU { search.sort === "sku" ? ( search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} /> ) : '' } </span></th>
-                                <th className="widthTable500"><span title="name" onClick={handleArrange}>Name { search.sort === "name" ? ( search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} /> ) : '' } </span></th>
+                                <th className="widthTable300"><span title="sku" onClick={handleArrange}>SKU {search.sort === "sku" ? (search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} />) : ''} </span></th>
+                                <th className="widthTable500"><span title="name" onClick={handleArrange}>Name {search.sort === "name" ? (search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} />) : ''} </span></th>
                                 <th className="widthTable500">Category</th>
-                                <th className="widthTable300"><span title="price" onClick={handleArrange}>Price { search.sort === "price" ? ( search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} /> ) : '' } </span></th>
-                                <th className="widthTable300"><span title="amount" onClick={handleArrange}>In Stock { search.sort === "amount" ? ( search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} /> ) : '' } </span></th>
-                                <th className="widthTable300"><span title="vendor" onClick={handleArrange}>Vendor { search.sort === "vendor" ? ( search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} /> ) : '' } </span></th>
-                                <th className="widthTable300"><span title="arrivalDate" onClick={handleArrange}>Arrival Date { search.sort === "arrivalDate" ? ( search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} /> ) : '' } </span></th>
+                                <th className="widthTable300"><span title="price" onClick={handleArrange}>Price {search.sort === "price" ? (search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} />) : ''} </span></th>
+                                <th className="widthTable300"><span title="amount" onClick={handleArrange}>In Stock {search.sort === "amount" ? (search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} />) : ''} </span></th>
+                                <th className="widthTable300"><span title="vendor" onClick={handleArrange}>Vendor {search.sort === "vendor" ? (search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} />) : ''} </span></th>
+                                <th className="widthTable300"><span title="arrivalDate" onClick={handleArrange}>Arrival Date {search.sort === "arrivalDate" ? (search.order_by === "DESC" ? <FontAwesomeIcon icon={faArrowDown} /> : <FontAwesomeIcon icon={faArrowUp} />) : ''} </span></th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -714,37 +734,33 @@ const ProductList = () => {
                             setPriceItem={(index: number, value: string) => {
                                 const cloneProduct = JSON.parse(JSON.stringify(product));
                                 cloneProduct[index] = { ...cloneProduct[index], price: value };
-                                
                                 setProduct([...cloneProduct]);
                             }}
                             setQuantityItem={(index: number, value: string) => {
                                 const cloneProduct = JSON.parse(JSON.stringify(product));
                                 cloneProduct[index] = { ...cloneProduct[index], amount: value };
-                                
                                 setProduct([...cloneProduct]);
                             }}
                         />
-
-                        
                     </table>
                 </div>
 
                 <div className="tfoot">
                     <div className="panigation">
-                            <PanigationComponent
-                                pages={productsPerPage}
-                                changeTotal={perPage}
-                                setCurrentPage={(value: number) => { 
-                                    if (typeof(value) === 'number') {
-                                        setCurrentPage(value);
-                                        setIsChecked([]);
-                                    } 
-                                }}
-                            />
+                        <PanigationComponent
+                            pages={productsPerPage}
+                            changeTotal={perPage}
+                            setCurrentPage={(value: number) => {
+                                if (typeof (value) === 'number') {
+                                    setCurrentPage(value);
+                                    setIsChecked([]);
+                                }
+                            }}
+                        />
                     </div>
 
                     <div className={`changeNumber d-flex align-items-center`}>
-                        <p>{ store?.products?.recordsTotal } Items</p>
+                        <p>{store?.products?.recordsTotal} Items</p>
 
                         <SelectComponent
                             className="width80"
@@ -759,7 +775,7 @@ const ProductList = () => {
                 </div>
                 <div className="deleteBox">
                     <button onClick={() => setIsModalDelete(true)} disabled={isChecked.length === 0 && checkedAll.length === 0 ? true : false} className={isChecked.length === 0 && checkedAll.length === 0 ? "deleteButton" : "deleteButton active"}>Delete</button>
-                    <button  onClick={() => setIsModalEdit(true)} disabled={productsData.length === 0 ? true : false} className={productsData.length === 0 ? "deleteButton" : "deleteButton active"} >Lưu thay đổi</button>
+                    <button onClick={() => setIsModalEdit(true)} disabled={productsData.length === 0 ? true : false} className={productsData.length === 0 ? "deleteButton" : "deleteButton active"} >Lưu thay đổi</button>
                 </div>
             </div>
         </div>
