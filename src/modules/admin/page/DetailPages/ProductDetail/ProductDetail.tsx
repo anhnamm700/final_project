@@ -318,16 +318,6 @@ const ProductDetail = () => {
 
             formDataProduct.append('productDetail', JSON.stringify(productDetail));
 
-            // const productResponse = await axios.post(`${API_PATHS.createProduct}`,
-            // {productDetail: formDataProduct.get('productDetail')},
-            // {
-            //     headers: {
-            //         Authorization: `${auth}`,
-            //         'Content-Type': 'multipart/form-data'
-            //     },
-                
-            // });
-
 
             const productResponse = await axiosAPI({
                 method: 'POST',
@@ -352,7 +342,7 @@ const ProductDetail = () => {
                         formDataImages.append('images[]', file);
                         formDataImages.append('order', JSON.parse(JSON.stringify(index)));
                         formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
-                        // const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages,  {headers: {Authorization: `${auth}`, 'Content-Type': 'multipart/form-data'}});
+                        
                         const imagesResponse = await axiosAPI({
                             method: 'POST',
                             url: API_PATHS.updateImage,

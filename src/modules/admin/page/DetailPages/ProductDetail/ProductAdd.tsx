@@ -199,16 +199,6 @@ const ProductAdd = () => {
 
             formDataProduct.append('productDetail', JSON.stringify(productDetail));
 
-            // const productResponse = await axios.post(`${API_PATHS.createProduct}`,
-            // {productDetail: formDataProduct.get('productDetail')},
-            // {
-            //     headers: {
-            //         Authorization: `${auth}`,
-            //         'Content-Type': 'multipart/form-data'
-            //     },
-                
-            // });
-
             const productResponse = await axiosAPI({
                 method: 'POST',
                 url: API_PATHS.createProduct,
