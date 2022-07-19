@@ -108,7 +108,6 @@ const ProductList = () => {
                     alert('Có lỗi xảy ra!');
                 }
 
-
                 setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);

@@ -86,7 +86,7 @@ const UserAdd = () => {
 
             if (!userPresponse?.data?.errors) {
                 alert('Tạo tài khoản thành công');
-                // navigate(ROUTES.userList);
+                navigate(ROUTES.userList);
             }
 
         } catch (error: any) {
