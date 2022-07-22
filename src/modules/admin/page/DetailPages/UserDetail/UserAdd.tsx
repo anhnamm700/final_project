@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import Redirect, { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faAngleUp, } from '@fortawesome/free-solid-svg-icons';
+import { ToastContainer, toast } from 'react-toastify';
+import Spinner from 'react-bootstrap/Spinner';
 
 
 import style from './style.module.scss';
@@ -11,6 +13,7 @@ import { ACCESS_TOKEN_KEY, memberShipUser, typeAcc, permissionAcc } from 'utils/
 import { userValidate } from 'utils/validate';
 import axiosAPI from 'common/axiosConfig/axios';
 import InfoComponent from 'modules/components/InfoComponent';
+import ToastComponent from 'modules/components/ToastComponent';
 import LoadingComponent from 'modules/components/LoadingComponent/LoadingComponent';
 import Header from 'modules/admin/components/General/Header';
 import { API_PATHS } from 'configs/api';
@@ -33,11 +36,11 @@ const UserAdd = () => {
         roles: []
     });
     const [isUserTypeActive, setIsUserTypepActive] = useState<boolean>(false);
-
-
+    const [isSpinner, setIsSpinner] = useState<boolean>(false);
     const [isRolesActive, setIsRolesActive] = useState<boolean>(false);
     const [isDisplay, setIsDisplay] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isAddSuccess, setIsAddSuccess] = useState<boolean>(false);
 
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
     const store = useSelector((state: any) => state.admin);
@@ -58,12 +61,11 @@ const UserAdd = () => {
         }
     });
 
-
-
-    const handleUpdate = useCallback(async () => {
+    const handleUpdate = async () => {
         setIsLoading(true);
+        setIsSpinner(true);
         try {
-            const userDetail = await {
+            const userDetail = {
                 email: userInfo?.email,
                 firstName: userInfo?.firstName,
                 lastName: userInfo?.lastName,
@@ -85,23 +87,32 @@ const UserAdd = () => {
             });
 
             if (!userPresponse?.data?.errors) {
-                alert('Tạo tài khoản thành công');
-                navigate(ROUTES.userList);
+                setIsAddSuccess(true);
             }
 
         } catch (error: any) {
             throw new Error(error);
         }
         setIsLoading(false);
-    }, [userInfo]);
+    };
 
     const handleChangeUserType = (e: any) => {
         const { value, title } = e.target;
         setUserInfo({ ...userInfo, roles: e.target.checked ? [...userInfo.roles, { id: value, name: title }] : (userInfo.roles.filter((item: any) => item.id !== value)) })
     }
 
+    useEffect(() => {
+        if (isAddSuccess) {
+            navigate(ROUTES.userList, { state: { toast: 'Thêm người dùng thành công' } });
+            setIsAddSuccess(false);
+            setIsSpinner(false);
+        }
+    }, [isAddSuccess]);
+
     return (
         <div className={style.detailWrapper}>
+            <ToastContainer/>
+
             {
                 isLoading && <LoadingComponent />
             }
@@ -330,8 +341,12 @@ const UserAdd = () => {
                 </div>
 
                 <div className={`${style.flexComponent} ${style.socialOption}`}>
-                    <button disabled={userInfo?.firstName?.length === 0 || userInfo?.lastName?.length === 0 || userInfo?.email?.length === 0} className={style.updateButton} onClick={handleUpdate}>Update</button>
+                    <button disabled={userInfo?.firstName?.length === 0 || userInfo?.lastName?.length === 0 || userInfo?.email?.length === 0 || isSpinner} className={userInfo?.firstName?.length === 0 || userInfo?.lastName?.length === 0 || userInfo?.email?.length === 0 || isSpinner ? style.disableBtn : style.updateButton} onClick={handleUpdate}>Update</button>
+                    {
+                        isSpinner && <Spinner animation="border" className={style.spinner} />
+                    }
                 </div>
+                
             </div>
         </div>
     );

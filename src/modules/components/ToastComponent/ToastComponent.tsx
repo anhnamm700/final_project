@@ -1,4 +1,4 @@
-
+import { memo } from 'react';
 import { ToastContainer } from 'react-bootstrap';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
@@ -16,7 +16,7 @@ function ToastComponent(props: Props) {
     return (
         <Row>
             <ToastContainer className="p-3" position='top-end' containerPosition='fixed' style={{ marginTop: '100px' }}>
-                <Toast onClose={() => setShow()} show={show} delay={3000} autohide >
+                <Toast onClose={setShow} show={show} delay={3000} autohide >
                     <Toast.Header>
                         <img
                             src="holder.js/20x20?text=%20"
@@ -32,4 +32,4 @@ function ToastComponent(props: Props) {
     );
 }
 
-export default ToastComponent;
+export default memo(ToastComponent);

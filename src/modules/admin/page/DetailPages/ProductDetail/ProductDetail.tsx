@@ -2,11 +2,12 @@ import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Cookies from 'js-cookie';
 import moment from 'moment';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import NumberFormat from 'react-number-format';
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import Switch from "react-switch";
+import Spinner from 'react-bootstrap/Spinner';
 
 import axiosAPI from 'common/axiosConfig/axios';
 import { API_PATHS } from 'configs/api';
@@ -26,6 +27,7 @@ import style from './style.module.scss';
 
 const ProductDetail = () => {
     const { id } = useParams();
+    const location = useLocation();
     const [product, setProduct] = useState<any>({});
     const [errorMessage, setErrorMessage] = useState<any>({});
     const [description, setDescription] = useState<any>(null);
@@ -74,6 +76,8 @@ const ProductDetail = () => {
     const [isCustom, setIsCustom] = useState<boolean>(false);
     const [isMetaCustom, setIsMetaCustom] = useState<boolean>(false);
     const [isSalePrice, setIsSalePrice] = useState<boolean>(false);
+    const [isToastDisplay, setIsToastDisplay] = useState<boolean>(false);
+    const [isSpinner, setIsSpinner] = useState<boolean>(false);
 
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
     const selectors = useSelector((state: any) => state.admin);
@@ -94,30 +98,40 @@ const ProductDetail = () => {
     });
 
     useEffect(() => {
-        const activeChange = async () => {
+        if (Object(location)?.state?.toast) {
+            setIsToastDisplay(true);
+        }
+    }, [location.state]);
+    
+    useEffect(() => {
+        if (!isToastDisplay) window.history.replaceState({}, document.title);
+    }, [isToastDisplay]);
+
+    useEffect(() => {
+        const getData = async() => {
             try {
-                setIsLoading(true);
                 if (updatedComplete) {
                     setIsSuccess(true);
+                    setIsSpinner(false);
                     window.scrollTo(0, 0);
                 };
-
-                const productDetail = await axiosAPI({ method: 'post', url: `${API_PATHS.detailProduct}`, payload: { id: id }, header: { Authorization: `${auth}` } });
-
-                if (!productDetail?.data?.errors || productDetail.data.success) {
-                    const data = await productDetail?.data?.data;
-                    setProduct(data);
-                } else {
-                    alert('Có lỗi xảy ra!');
+    
+                if (id) {
+                    const productDetail = await axiosAPI({ method: 'POST', url: `${API_PATHS.detailProduct}`, payload: { id: id }, header: { Authorization: `${auth}` } });
+                    
+                    if (!productDetail?.data?.errors || productDetail.data.success) {
+                        const data = await productDetail?.data?.data;
+                        setProduct(data);
+                    } else {
+                        alert('Có lỗi xảy ra!');
+                    }
                 }
-
-                setIsLoading(false);
             } catch (error: any) {
                 throw new Error(error);
             }
         }
-
-        activeChange();
+        setIsLoading(false);
+        getData();
     }, [id, updatedSuccess]);
 
     useEffect(() => {
@@ -246,6 +260,7 @@ const ProductDetail = () => {
     }, [description]);
 
     const handleUpdate = async () => {
+        setIsSpinner(true);
         setIsLoading(true);
         try {
             const cateId = await productInfo?.categories?.map((item: any) => Number(item.value));
@@ -309,7 +324,7 @@ const ProductDetail = () => {
                 setUpdatesSuccess(!updatedSuccess);
             } else {
                 if (!productResponse?.data?.errors && productResponse?.data?.success && dataImages) {
-                    dataImages?.forEach(async (file: any, index: number) => {
+                    const responseImages = dataImages?.map(async (file: any, index: number) => {
                         const formDataImages = new FormData();
                         formDataImages.append('images[]', file);
                         formDataImages.append('order', JSON.parse(JSON.stringify(index)));
@@ -325,14 +340,17 @@ const ProductDetail = () => {
                             }
                         });
 
-                        if (imagesResponse && !imagesResponse?.data?.errors) {
-                            setUpdatedComplete(!imagesResponse?.data?.errors);
+                        return imagesResponse;
+                    });
+
+                    Promise.all(responseImages).then(res => {
+                        if(res?.every((item: any) => !item.data.error)) {
+                            setUpdatedComplete(true);
                             setUpdatesSuccess(!updatedSuccess);
                         }
                     });
                 }
             }
-
         } catch (error: any) {
             throw new Error(error);
         }
@@ -363,6 +381,17 @@ const ProductDetail = () => {
                     show={isSuccess}
                     content="Cập nhật thành công"
                     setShow={() => setIsSuccess(false)}
+                />
+            }
+
+            {
+                isToastDisplay && <ToastComponent
+                    show={isToastDisplay}
+                    setShow={() => {
+                        setIsToastDisplay(false);
+                        Object(location).state.toast = null;
+                    }}
+                    content={Object(location).state.toast}
                 />
             }
 
@@ -827,9 +856,11 @@ const ProductDetail = () => {
 
 
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
-                                <button disabled={isDisableButton} className={isDisableButton ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Update</button>
+                                <button disabled={isDisableButton || isSpinner} className={isDisableButton || isSpinner ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Update</button>
+                                {
+                                    isSpinner && <Spinner animation="border" className={style.spinner} />
+                                }
                             </div>
-
                         </div>
                     </div>
                 </div>

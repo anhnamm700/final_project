@@ -153,15 +153,22 @@ select.optionOther, textarea.optionOther {
 .socialOption {
     margin: 50px;
     text-align: right;
+
+    button {
+        width: 200px;
+        height: 50px;
+        border-radius: 5px;
+        margin-left: 60px;
+        color: #fff;
+    }
 }
 
 .updateButton {
-    width: 200px;
-    height: 50px;
-    border-radius: 5px;
-    margin-left: 60px;
     background-color: #3498db;
-    color: #fff
+}
+
+.disableBtn {
+    background: #999;
 }
 
 .relative {

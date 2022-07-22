@@ -27,7 +27,6 @@ import { ROUTES } from "configs/routes";
 const ProductList = () => {
     const dispatch = useDispatch();
     const store = useSelector((state: any) => state.admin);
-
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
     const navigate = useNavigate();
 
@@ -55,6 +54,7 @@ const ProductList = () => {
     const [isLoadingVendor, setIsLoadingVendor] = useState<boolean>(false);
     const [isExpandSearch, setIsExpandSearch] = useState<boolean>(false);
     const [isArrangeActive, setIsArrangepActive] = useState<boolean>(false);
+    const [checkedToDel, setCheckedToDel] = useState<any[]>([]);
     const [search, setSearch] = useState<any>({
         seachKeyword: '',
         category: '0',
@@ -85,7 +85,6 @@ const ProductList = () => {
                 } else {
                     alert('Có lỗi xảy ra!');
                 }
-
 
                 setIsLoading(false);
             } catch (error: any) {
@@ -367,68 +366,31 @@ const ProductList = () => {
         }
     }
 
-    const handleDeleteProducts = useCallback(async () => {
+    const handleDeleteProducts = async () => {
         setIsLoading(true);
-        if (checkedAll.length === 0 && isChecked.length > 0) {
-            try {
-                setIsLoading(true);
-                const dataResponse = await axiosAPI({
-                    method: 'POST',
-                    url: API_PATHS.editProduct,
-                    payload: { params: [...isChecked.map((item: any) => ({ "id": item, "delete": 1 }))] },
-                    header: { Authorization: `${auth}` }
-                });
+        try {
+            setIsLoading(true);
+            const dataResponse = await axiosAPI({
+                method: 'POST',
+                url: API_PATHS.editProduct,
+                payload: { params: [...checkedToDel.map((item: any) => ({ "id": item, "delete": 1 }))] },
+                header: { Authorization: `${auth}` }
+            });
 
-                if (!dataResponse?.data?.errors) {
-                    setIsDeleteSuccess(true);
-                    setIsReload(!isReload);
-                }
-                setIsLoading(false);
-            } catch (error: any) {
-                throw new Error(error);
+            if (!dataResponse?.data?.errors) {
+                setIsDeleteSuccess(true);
+                setIsReload(!isReload);
             }
-
-        } else if (checkedAll.length > 0) {
-            try {
-                setIsLoading(true);
-                const dataResponse = await axiosAPI({
-                    method: 'POST',
-                    url: API_PATHS.editProduct,
-                    payload: { params: [...checkedAll.map((item: any) => ({ "id": item, "delete": 1 }))] },
-                    header: { Authorization: `${auth}` }
-                });
-
-                if (!dataResponse?.data?.errors) {
-                    setIsDeleteSuccess(true);
-                    setIsReload(!isReload);
-                }
-                setIsLoading(true);
-            } catch (error: any) {
-                throw new Error(error);
-            }
-        } else if (!!Number(deleteId)) {
-            try {
-                setIsLoading(true);
-                const dataResponse = await axiosAPI({
-                    method: 'POST',
-                    url: API_PATHS.editProduct,
-                    payload: { params: [{ "id": deleteId, "delete": 1 }] },
-                    header: { Authorization: `${auth}` }
-                });
-
-                if (!dataResponse?.data?.errors) {
-                    setIsDeleteSuccess(true);
-                    setIsReload(!isReload);
-                }
-                setIsLoading(false);
-            } catch (error: any) {
-                throw new Error(error);
-            }
+            setIsLoading(false);
+        } catch (error: any) {
+            throw new Error(error);
         }
+        
+        setCheckedToDel([]);
         setIsModalDelete(false);
         window.scrollTo(0, 0);
         setIsLoading(false);
-    }, [checkedAll, isChecked, deleteId]);
+    };
 
 
     const handleActiveProduct = (value: any) => {
@@ -511,6 +473,7 @@ const ProductList = () => {
             {
                 isLoading && <LoadingComponent />
             }
+
             <h2 className="title">Danh sách sản phẩm</h2>
 
             <div>
@@ -723,12 +686,18 @@ const ProductList = () => {
                         <TableComponent
                             data={product}
                             isChecked={isChecked}
+                            checkedToDel={checkedToDel}
                             onActive={handleActiveProduct}
                             setCheckedSearch={handleCheckedItems}
                             deleteItem={(e: any) => {
-                                const id = e.target?.parentNode?.dataset?.id
-                                setDeleteId(id);
-                                setIsModalDelete(true);
+                                const id = e.target?.parentNode?.dataset?.id;
+
+                                if (!checkedToDel.includes(id)) {
+                                    setCheckedToDel([ ...checkedToDel, id ]);
+                                } else {
+                                    checkedToDel.splice(checkedToDel.indexOf(id), 1);
+                                    setCheckedToDel([ ...checkedToDel ]);
+                                }
                             }}
                             setPriceItem={(index: number, value: string) => {
                                 const cloneProduct = JSON.parse(JSON.stringify(product));
@@ -773,8 +742,21 @@ const ProductList = () => {
 
                 </div>
                 <div className="deleteBox">
-                    <button onClick={() => setIsModalDelete(true)} disabled={isChecked.length === 0 && checkedAll.length === 0 ? true : false} className={isChecked.length === 0 && checkedAll.length === 0 ? "deleteButton" : "deleteButton active"}>Delete</button>
-                    <button onClick={() => setIsModalEdit(true)} disabled={productsData.length === 0 ? true : false} className={productsData.length === 0 ? "deleteButton" : "deleteButton active"} >Lưu thay đổi</button>
+                    {
+                        checkedToDel.length > 0 ? (
+                            <button onClick={() => setIsModalDelete(true)} disabled={checkedToDel.length === 0} className={checkedToDel.length === 0 ? "deleteButton" : "deleteButton active"}>Delete</button>
+                        ) : (
+                            <button onClick={() => setIsModalEdit(true)} disabled={productsData.length === 0} className={productsData.length === 0 ? "deleteButton" : "deleteButton active"} >Lưu thay đổi</button>
+                        )
+                    }
+                    
+                    {
+                        isChecked.length > 0 ? (
+                            <button className={"deleteButton active"}>Export selected: CSV</button>
+                            ) : (
+                            <button className={"deleteButton active"}>Export all: CSV</button>
+                        )
+                    }
                 </div>
             </div>
         </div>

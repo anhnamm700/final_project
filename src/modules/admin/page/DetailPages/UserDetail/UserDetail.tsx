@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faAngleUp, } from '@fortawesome/free-solid-svg-icons';
+import Spinner from 'react-bootstrap/Spinner';
 
 import style from './style.module.scss';
 import { ACCESS_TOKEN_KEY, memberShipUser } from 'utils/constant';
@@ -55,7 +56,7 @@ const UserDetail = () => {
     const [accRoles, setAccRoles] = useState<any[]>([]);
     const [isUserTypeActive, setIsUserTypepActive] = useState<boolean>(false);
     const [isSuccess, setIsSuccess] = useState<boolean>(false);
-
+    const [isSpinner, setIsSpinner] = useState<boolean>(false);
     const [updatedComplete, setUpdatedComplete] = useState<any>(null);
     const [updatedSuccess, setUpdatesSuccess] = useState<boolean>(false);
     const [isDisplay, setIsDisplay] = useState<boolean>(false);
@@ -80,6 +81,7 @@ const UserDetail = () => {
                 setIsLoading(true);
                 if (updatedComplete) {
                     setIsSuccess(true);
+                    setIsSpinner(false);
                     window.scrollTo(0, 0);
                 };
                 const userDetail = await axiosAPI({ method: 'post', url: `${API_PATHS.detailUser}`, payload: { id: id }, header: { Authorization: `${auth}` } });
@@ -145,6 +147,7 @@ const UserDetail = () => {
 
     const handleUpdate = useCallback(async () => {
         setIsLoading(true);
+        setIsSpinner(true);
         try {
             const productDetail = await {
                 email: userInfo?.email,
@@ -438,7 +441,10 @@ const UserDetail = () => {
                 </div>
 
                 <div className={`${style.flexComponent} ${style.socialOption}`}>
-                    <button disabled={userInfo?.firstName?.length === 0 || userInfo?.lastName?.length === 0 || userInfo?.email?.length === 0} className={style.updateButton} onClick={handleUpdate}>Update</button>
+                    <button disabled={userInfo?.firstName?.length === 0 || userInfo?.lastName?.length === 0 || userInfo?.email?.length === 0 || isSpinner} className={userInfo?.firstName?.length === 0 || userInfo?.lastName?.length === 0 || userInfo?.email?.length === 0 || isSpinner ? style.disableBtn : style.updateButton} onClick={handleUpdate}>Update</button>
+                    {
+                        isSpinner && <Spinner animation="border" className={style.spinner} />
+                    }
                 </div>
             </div>
         </div>

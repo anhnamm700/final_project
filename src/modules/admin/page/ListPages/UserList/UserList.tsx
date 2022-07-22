@@ -1,9 +1,10 @@
 
+import { ToastContainer, toast } from 'react-toastify';
 import Cookies from "js-cookie";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import moment from "moment";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { DateRangePicker } from 'react-date-range';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faChevronUp, faTrash, faAngleDown, faAngleUp, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +25,8 @@ import InfoComponent from "modules/components/InfoComponent";
 import { ROUTES } from "configs/routes";
 
 const UserList = () => {
+    const location = useLocation();
+
     const dispatch = useDispatch();
     const store = useSelector((state: any) => state.admin);
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
@@ -42,6 +45,7 @@ const UserList = () => {
     const [userList, setUserList] = useState<any>([]);
     const [isExpandSearch, setIsExpandSearch] = useState<boolean>(false);
     const [isArrangeActive, setIsArrangepActive] = useState<boolean>(false);
+    const [isToastDisplay, setIsToastDisplay] = useState<boolean>(false);
     const [search, setSearch] = useState<any>({
         seachKeyword: '',
         membership: [],
@@ -122,6 +126,16 @@ const UserList = () => {
     }, [dispatch]);
 
     useEffect(() => {
+        if (!isToastDisplay) window.history.replaceState({}, document.title);
+    }, [isToastDisplay]);
+
+    useEffect(() => {
+        if (Object(location)?.state?.toast) {
+            setIsToastDisplay(true);
+        }
+    }, [location.state]);
+
+    useEffect(() => {
         const getProducts = async () => {
             try {
                 setIsLoading(true);
@@ -171,12 +185,22 @@ const UserList = () => {
     }
 
     const handleCheckedItems = (e: any) => {
+        const id = e.target?.parentNode?.dataset?.id;
         const { checked, value } = e.target;
 
         if (checked) {
             setIsChecked([...isChecked, value]);
         } else {
             setIsChecked(isChecked.filter((item: any) => item !== value));
+        }
+
+        if (id) {
+            if (isChecked.includes(id)) {
+                isChecked.splice(isChecked.indexOf(id), 1);
+                setIsChecked([...isChecked]);
+            } else {
+                setIsChecked([...isChecked, id]);
+            }
         }
     }
 
@@ -233,6 +257,8 @@ const UserList = () => {
             }
         }
 
+        setIsChecked([]);
+        setCheckedAll([]);
         setIsModalDelete(false);
         window.scrollTo(0, 0);
         setIsLoading(false);
@@ -365,12 +391,24 @@ const UserList = () => {
             setIsChecked([]);
         }
     }
+
+    console.log(isChecked);
     
+
     return (
         <div className="warpper">
             {
                 isLoading && <LoadingComponent />
             }
+
+            {
+                isToastDisplay && <ToastComponent
+                    show={isToastDisplay}
+                    setShow={() => setIsToastDisplay(false)}
+                    content="Thêm tài khoản thành công!"
+                />
+            }
+
             <h2 className="title">Danh sách tài khoản</h2>
 
             <div>
@@ -637,7 +675,7 @@ const UserList = () => {
                         <tbody>
                             {
                                 userList?.map((item: any, index: number) => (
-                                    <tr key={item.profile_id} id={item.profile_id} data-active={item.enabled}>
+                                    <tr key={item.profile_id} id={item.profile_id} data-active={item.enabled} className={isChecked.includes(item.profile_id) ? style.disabledTr : style.activeTr}>
                                         <td>
                                             <input
                                                 type="checkbox"
@@ -660,8 +698,8 @@ const UserList = () => {
                                                 value=""
                                                 type="button"
                                                 icon={<FontAwesomeIcon icon={faTrash} className={style.buttonIcon} />}
-                                                size="n"
-                                                onClick={handleDeleteItem}
+                                                size={isChecked?.includes(item.profile_id) ? 'd' : 'n'}
+                                                onClick={handleCheckedItems}
                                             />
                                         </td>
                                     </tr>
@@ -698,6 +736,7 @@ const UserList = () => {
                 <div className="deleteBox">
                     <button onClick={() => setIsModalDelete(true)} disabled={isChecked.length === 0 && checkedAll.length === 0 ? true : false} className={isChecked.length === 0 && checkedAll.length === 0 ? "deleteButton" : "deleteButton active"}>Delete</button>
                 </div>
+                <ToastContainer />
             </div>
         </div>
     );

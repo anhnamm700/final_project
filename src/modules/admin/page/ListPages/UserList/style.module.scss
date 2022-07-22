@@ -112,3 +112,11 @@ th {
         cursor: pointer;
     }
 }
+
+.disabledTr {
+    opacity: .5;
+}
+
+.activeTr {
+    opacity: 1;
+}

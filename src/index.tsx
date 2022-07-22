@@ -10,6 +10,7 @@ import './MultiSelectDemo.css';
 import 'react-date-range/dist/styles.css'; 
 import 'react-date-range/dist/theme/default.css'; 
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-notifications/lib/notifications.css';
 
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';

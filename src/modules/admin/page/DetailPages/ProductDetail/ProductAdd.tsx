@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
 import Cookies from 'js-cookie';
 import Switch from "react-switch";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar } from '@fortawesome/free-solid-svg-icons';
 import NumberFormat from 'react-number-format';
 import moment from 'moment';
+import Spinner from 'react-bootstrap/Spinner';
 
 
 import style from './style.module.scss';
@@ -35,7 +35,7 @@ const ProductAdd = () => {
         name: '',
         brand: '',
         condition: '',
-        sku: Date.now(),
+        sku: Math.floor(Date.now() / 1000),
         images: [],
         categories: [],
         cate_id: [],
@@ -47,7 +47,7 @@ const ProductAdd = () => {
         participate_sale: '0',
         sale_price_type: '',
         sale_price: '',
-        arrival_date: Date.now(),
+        arrival_date: Math.floor(Date.now() / 1000),
         quantity: '',
         shipping_default: { id: "1", zone_name: "Continental U.S.", price: "0" },
         shipping: [],
@@ -71,10 +71,7 @@ const ProductAdd = () => {
     const [isCustom, setIsCustom] = useState<boolean>(false);
     const [isMetaCustom, setIsMetaCustom] = useState<boolean>(false);
     const [isSalePrice, setIsSalePrice] = useState<boolean>(false);
-    const [isUpdateSuccess, setIsUpdateSuccess] = useState<any>({
-        success: false,
-        id: 0
-    });
+    const [isSpinner, setIsSpinner] = useState<boolean>(false);
     const navigate = useNavigate();
 
     const auth = Cookies.get(ACCESS_TOKEN_KEY);
@@ -146,14 +143,11 @@ const ProductAdd = () => {
     useEffect(() => {
         if (description) setProductInfo({ ...productInfo, description: description });
     }, [description]);
-
-    useEffect(() => {
-        if (isUpdateSuccess.success) navigate(`${detailPage}${isUpdateSuccess.id}`);
-    }, [isUpdateSuccess]);
-
+    
     const handleUpdate = useCallback(async () => {
+        setIsLoading(true);
+        setIsSpinner(true);
         try {
-            setIsLoading(true);
             const cateId = await productInfo?.categories?.map((item: any) => Number(item.value));
             const shipping = await productInfo?.shipping.map((item: any) => {
                 if (Number(item?.id) !== 1) {
@@ -162,10 +156,9 @@ const ProductAdd = () => {
                     );
                 }
             });
-
+    
             const shippingRequest = await [...shipping, { "id": Number(productInfo?.shipping_default?.id), "price": productInfo?.shipping_default?.price }].filter((item: any) => item);
-
-
+    
             const productDetail = await {
                 // ...product,
                 "vendor_id": productInfo?.vendor_id,
@@ -196,9 +189,9 @@ const ProductAdd = () => {
                 arrival_date: moment.unix(productInfo?.arrival_date).format("YYYY-MM-DD")
             }
             const formDataProduct = new FormData();
-
+    
             formDataProduct.append('productDetail', JSON.stringify(productDetail));
-
+    
             const productResponse = await axiosAPI({
                 method: 'POST',
                 url: API_PATHS.createProduct,
@@ -208,32 +201,42 @@ const ProductAdd = () => {
                     'Content-Type': 'multipart/form-data'
                 },
             });
-
+    
             const dataImages = productInfo?.images;
-
+    
             if (!productResponse?.data?.errors && productResponse?.data?.success && dataImages) {
                 const id = productResponse?.data?.data;
-
-                await dataImages?.forEach(async (file: any, index: number) => {
+                const responseImages = dataImages?.map(async (file: any, index: number) => {
                     const formDataImages = new FormData();
-
+    
                     formDataImages.append('images[]', file);
                     formDataImages.append('order', JSON.parse(JSON.stringify(index)));
                     formDataImages.append('productId', JSON.parse(JSON.stringify(id)));
-                    const imagesResponse = await axios.post(API_PATHS.updateImage, formDataImages, { headers: { Authorization: `${auth}`, 'Content-Type': 'multipart/form-data' } });
-
-                    if (!imagesResponse?.data?.errors) {
-                        setIsUpdateSuccess({
-                            success: true,
-                            id: id
-                        });
+                    const responseImg = await axiosAPI({
+                        method: 'POST',
+                        url: API_PATHS.updateImage,
+                        payload: formDataImages,
+                        header: { 
+                            Authorization: `${auth}`, 
+                            'Content-Type': 'multipart/form-data' 
+                        }
+                    });
+    
+                    return responseImg;
+                });
+    
+                Promise.all(responseImages).then(res => {
+                    if(res?.every((item: any) => !item.data.error)) {
+                        navigate(`${detailPage}${id}`, { state: { toast: 'Thêm sản phẩm thành công!' } })
+                        setIsSpinner(false);
                     }
                 });
+                
             }
-            setIsLoading(false);
         } catch (error: any) {
             throw new Error(error);
         }
+        setIsLoading(false);
     }, [productInfo]);
 
     const updateInfo = (index: number, value: string) => {
@@ -255,14 +258,6 @@ const ProductAdd = () => {
         <div className={style.detailWrapper}>
             {
                 isLoading && <LoadingComponent />
-            }
-
-            {
-                isUpdateSuccess.success && <ToastComponent
-                    show={isUpdateSuccess.success}
-                    content="Thêm thành công"
-                    setShow={() => setIsUpdateSuccess(false)}
-                />
             }
 
             <Header
@@ -476,10 +471,7 @@ const ProductAdd = () => {
                                             prefix={'$'}
                                             onValueChange={(values, sourceInfo) => {
                                                 const { formattedValue, value } = values;
-
                                                 setProductInfo({ ...productInfo, price: Number(value).toFixed(2) });
-
-                                                // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                                 const { event, source } = sourceInfo;
                                             }}
                                         />
@@ -518,10 +510,7 @@ const ProductAdd = () => {
                                                     thousandSeparator={true}
                                                     onValueChange={(values, sourceInfo) => {
                                                         const { formattedValue, value } = values;
-
                                                         setProductInfo({ ...productInfo, sale_price: Number(value).toFixed(2) });
-
-                                                        // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                                         const { event, source } = sourceInfo;
                                                     }}
                                                 />
@@ -541,6 +530,8 @@ const ProductAdd = () => {
                                     value={moment.unix(productInfo?.arrival_date).format("YYYY-MM-DD")}
                                     onChangeInput={(e: any) => {
                                         const dateFomat = moment(e.target.value).format('YYYY-MM-DD');
+                                        console.log(new Date(dateFomat).getTime() / 1000);
+                                        
                                         setProductInfo({ ...productInfo, arrival_date: new Date(dateFomat).getTime() / 1000 });
                                     }}
                                 />
@@ -572,15 +563,11 @@ const ProductAdd = () => {
                                         thousandSeparator={true}
                                         onValueChange={(values, sourceInfo) => {
                                             const { formattedValue, value } = values;
-
-                                            setProductInfo({ ...productInfo, shipping_default: { ...productInfo?.shipping_default, price: Number(value).toFixed(2) } })
-
-                                            // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
+                                            setProductInfo({ ...productInfo, shipping_default: { ...productInfo?.shipping_default, price: Number(value).toFixed(2) } });
                                             const { event, source } = sourceInfo;
                                         }}
                                     />
                                 </div>
-
                                 {
                                     productInfo?.shipping?.map((item: any, index: number) => {
                                         if (Number(item?.id) === 1) return;
@@ -601,7 +588,6 @@ const ProductAdd = () => {
                                                 />
 
                                                 <p data-id={index} onClick={(index: any) => {
-                                                    // e.preventDefault();
                                                     handleRemoveCountries(index);
                                                 }} className={style.removeButton}>Remove</p>
                                             </div>
@@ -736,9 +722,11 @@ const ProductAdd = () => {
 
 
                             <div className={`${style.flexComponent} ${style.socialOption}`}>
-                                <button disabled={isDisableButton} className={isDisableButton ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Add</button>
+                                <button disabled={isDisableButton || isSpinner} className={isDisableButton || isSpinner ? `${style.updateButtonDisable} ${style.generalButton}` : `${style.updateButton} ${style.generalButton}`} onClick={handleUpdate}>Add</button>
+                                {
+                                    isSpinner && <Spinner animation="border" className={style.spinner} />
+                                }
                             </div>
-
                         </div>
                     </div>
                 </div>

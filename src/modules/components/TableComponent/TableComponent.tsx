@@ -15,6 +15,7 @@ interface Props {
     isChecked?: any[],
     isActive?: boolean,
     checked?: boolean,
+    checkedToDel: any[],
     onActive: (e: any) => void,
     setCheckedSearch: (e: any) => void,
     deleteItem?: (e: any) => void,
@@ -23,7 +24,7 @@ interface Props {
 }
 
 const TableComponent = (props: Props) => {
-    const { data, isChecked, checked, isActive, onActive, setCheckedSearch, deleteItem, setPriceItem, setQuantityItem } = props;
+    const { data, isChecked, checked, isActive, checkedToDel, onActive, setCheckedSearch, deleteItem, setPriceItem, setQuantityItem } = props;
     const navigate = useNavigate();
     const detailPage = ROUTES.productDetail.slice(0, -3);
     const userDetail = ROUTES.userDetail.slice(0, -3);
@@ -33,7 +34,7 @@ const TableComponent = (props: Props) => {
             <tbody>
                 {
                     data?.map((item: any, index: number) => (
-                        <tr key={item.id} id={item.id} data-active={item.enabled}>
+                        <tr key={item.id} id={item.id} data-active={item.enabled} className={checkedToDel.includes(item.id) ? style.disabledTr : style.activeTr}>
                             <td>
                                 <input
                                     type="checkbox"
@@ -42,11 +43,9 @@ const TableComponent = (props: Props) => {
                                     onChange={setCheckedSearch}
                                 />
                             </td>
-
                             <td>
                                 <FontAwesomeIcon icon={faPowerOff} values={item.id} className={ item.enabled === '0' ? `${style.powerIcon}` : `${style.active} ${style.powerIcon}` } onClick={onActive} />
                             </td>
-
                             <td>{ item.sku }</td>
                             <td><p onClick={() => navigate(`${detailPage}${item.id}`) } style={{ cursor: 'pointer', color: '#3498db' }}>{ item?.name?.slice(0, 40) }</p></td>
                             <td>{ item?.category?.slice(0, 46) }</td>
@@ -54,36 +53,31 @@ const TableComponent = (props: Props) => {
                                 <NumberFormat
                                     value={item.price}
                                     className={style.inputChange}
-                                    displayType={'input'}
+                                    displayType={checkedToDel?.includes(item.id) ? 'text' : 'input'}
                                     thousandSeparator={true}
                                     prefix={'$'}
                                     onValueChange={(values, sourceInfo) => {
                                         const { formattedValue, value } = values;
-
                                         setPriceItem(index, value);
-                                        // Event is a Synthetic Event wrapper which holds target and other information. Source tells whether the reason for this function being triggered was an 'event' or due to a 'prop' change
                                         const { event, source } = sourceInfo;
                                     }}
                                 />
                             </td>
                             <td>
-                                {/* { item.amount } */}
                                 <NumberFormat
                                     value={item.amount}
                                     className={style.inputChange}
-                                    displayType={'input'}
+                                    displayType={checkedToDel?.includes(item.id) ? 'text' : 'input'}
                                     thousandSeparator={true}
                                     prefix={''}
                                     onValueChange={(values, sourceInfo) => {
                                         const { formattedValue, value } = values;
-
                                         setQuantityItem(index, value);
                                         const { event, source } = sourceInfo;
                                     }}
                                 />
                             </td>
                             <td><span style={{ cursor: 'pointer', color: 'blue' }} onClick={() => navigate(`${userDetail}${item.vendorID}`)}>{ item.vendor }</span></td>
-                            {/* <td>{ new Date(item.arrivalDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) }</td> */}
                             <td>{ moment(item?.arrivalDate * 1000).format('MMM D, YYYY') }</td>
                             <td data-id={item?.id}>
                                 <ButtonComponent
@@ -91,7 +85,7 @@ const TableComponent = (props: Props) => {
                                     value=""
                                     type="button"
                                     icon={<FontAwesomeIcon icon={faTrash} className={style.buttonIcon} />}
-                                    size="n"
+                                    size={checkedToDel?.includes(item.id) ? 'd' : 'n'}
                                     onClick={deleteItem} 
                                 />
                                 

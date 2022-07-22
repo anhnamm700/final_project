@@ -1,7 +1,4 @@
 import axios from "axios";
-import Cookies from "js-cookie";
-
-import { ACCESS_TOKEN_KEY } from "utils/constant";
 
 interface Props {
     method: string,
